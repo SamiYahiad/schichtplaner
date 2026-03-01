@@ -264,6 +264,7 @@ export function ShiftCard({
               <EmployeePicker
                 bookedUserIds={bookedUserIds}
                 onSelect={handleBook}
+                shiftId={shift.id}
               >
                 <button
                   type="button"
