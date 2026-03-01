@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { ShiftCard } from "./shift-card";
 import { ShiftForm } from "./shift-form";
 import { EmployeeNav } from "./employee-nav";
+import { ScheduleOptions } from "./schedule-options";
 import type { ScheduleData, ShiftData } from "@/types/schedule";
 
 interface ScheduleGridProps {
@@ -30,6 +31,9 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
   // Employee filter state
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
 
+  // Division filter state
+  const [divisionFilter, setDivisionFilter] = useState<string | null>(null);
+
   // Fetch schedule with shifts via the schedule endpoint
   const { data, isLoading } = useQuery<{ schedule: ScheduleData }>({
     queryKey: ["schedule", weekNumber, year],
@@ -40,16 +44,23 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
     },
   });
 
-  const scheduleId = data?.schedule?.id ?? "";
-  const shifts = data?.schedule?.shifts ?? [];
+  const schedule = data?.schedule ?? null;
+  const scheduleId = schedule?.id ?? "";
+  const shifts = schedule?.shifts ?? [];
+  const layout = schedule?.settingsLayout ?? "LAYOUT_1";
+  const showTitle = schedule?.showTitle ?? true;
+  const showPauses = schedule?.showPauses ?? true;
 
-  // Group shifts by dayOfWeek
+  // Group shifts by dayOfWeek, applying division filter
   const shiftsByDay = useMemo(() => {
+    const filtered = divisionFilter
+      ? shifts.filter((s) => s.divisionId === divisionFilter)
+      : shifts;
     const grouped: Record<number, ShiftData[]> = {};
     for (let d = 1; d <= 7; d++) {
       grouped[d] = [];
     }
-    for (const shift of shifts) {
+    for (const shift of filtered) {
       if (grouped[shift.dayOfWeek]) {
         grouped[shift.dayOfWeek].push(shift);
       }
@@ -59,7 +70,7 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
       grouped[Number(day)].sort((a, b) => a.shiftFrom.localeCompare(b.shiftFrom));
     }
     return grouped;
-  }, [shifts]);
+  }, [shifts, divisionFilter]);
 
   // Dialog state
   const [formOpen, setFormOpen] = useState(false);
@@ -84,6 +95,18 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
 
   return (
     <>
+      {/* Schedule Options toolbar */}
+      {schedule && (
+        <div className="mb-4">
+          <ScheduleOptions
+            schedule={schedule}
+            isManager={isManager}
+            divisionFilter={divisionFilter}
+            onDivisionFilterChange={setDivisionFilter}
+          />
+        </div>
+      )}
+
       {/* Employee filter bar */}
       {shifts.length > 0 && (
         <div className="mb-4">
@@ -150,6 +173,9 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
                     isManager={isManager}
                     currentUserId={member?.user?.id}
                     highlightUserId={selectedEmployeeId}
+                    layout={layout}
+                    showTitle={showTitle}
+                    showPauses={showPauses}
                   />
                 ))}
 
@@ -229,6 +255,9 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
                     isManager={isManager}
                     currentUserId={member?.user?.id}
                     highlightUserId={selectedEmployeeId}
+                    layout={layout}
+                    showTitle={showTitle}
+                    showPauses={showPauses}
                   />
                 ))}
 

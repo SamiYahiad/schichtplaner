@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { EmployeePicker } from "./employee-picker";
-import type { ShiftData } from "@/types/schedule";
+import type { ShiftData, ScheduleLayout } from "@/types/schedule";
 
 interface ShiftCardProps {
   shift: ShiftData;
@@ -17,13 +17,28 @@ interface ShiftCardProps {
   currentUserId?: string;
   /** If set, highlight shifts containing this user and dim others */
   highlightUserId?: string | null;
+  /** Layout variant: LAYOUT_1 = shadow card, LAYOUT_2 = colored left border */
+  layout?: ScheduleLayout;
+  /** Whether to show shift titles */
+  showTitle?: boolean;
+  /** Whether to show pause information */
+  showPauses?: boolean;
 }
 
 function getInitials(firstName: string, lastName: string): string {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
-export function ShiftCard({ shift, onEdit, isManager, currentUserId, highlightUserId }: ShiftCardProps) {
+export function ShiftCard({
+  shift,
+  onEdit,
+  isManager,
+  currentUserId,
+  highlightUserId,
+  layout = "LAYOUT_1",
+  showTitle = true,
+  showPauses = true,
+}: ShiftCardProps) {
   const queryClient = useQueryClient();
   const bookedCount = shift.bookings.length;
   const isFull = bookedCount >= shift.maxEmployees;
@@ -129,16 +144,22 @@ export function ShiftCard({ shift, onEdit, isManager, currentUserId, highlightUs
     !bookedUserIds.includes(currentUserId) &&
     !isFull;
 
+  const isLayout1 = layout === "LAYOUT_1";
+
   return (
     <div
       className={cn(
-        "group rounded-lg border bg-card shadow-sm transition-all hover:shadow-md",
-        "overflow-hidden",
+        "group rounded-lg border bg-card transition-all overflow-hidden",
+        isLayout1 ? "shadow-sm hover:shadow-md" : "shadow-none",
         isPending && "opacity-70 pointer-events-none",
         isDimmed && "opacity-40 scale-[0.98]",
         highlightUserId && hasHighlightUser && "ring-2 ring-primary/40"
       )}
-      style={{ borderLeftWidth: "3px", borderLeftColor: divisionColor }}
+      style={
+        isLayout1
+          ? {}
+          : { borderLeftWidth: "3px", borderLeftColor: divisionColor }
+      }
     >
       {/* Header - clickable for edit */}
       <button
@@ -176,14 +197,14 @@ export function ShiftCard({ shift, onEdit, isManager, currentUserId, highlightUs
         )}
 
         {/* Title */}
-        {shift.title && (
+        {showTitle && shift.title && (
           <div className="text-xs text-foreground truncate font-medium">
             {shift.title}
           </div>
         )}
 
         {/* Pause info */}
-        {hasPause && (
+        {showPauses && hasPause && (
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <Pause className="size-2.5" />
             {pauseLabel}

@@ -123,5 +123,17 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ schedule });
+  return NextResponse.json({
+    schedule: {
+      id: schedule.id,
+      organizationId: schedule.organizationId,
+      weekNumber: schedule.weekNumber,
+      year: schedule.year,
+      isPublic: schedule.isPublic,
+      settingsLayout: schedule.settingsLayout,
+      showTitle: schedule.showTitle,
+      showPauses: schedule.showPauses,
+      shifts: schedule.shifts,
+    },
+  });
 }

@@ -44,12 +44,25 @@ export type ShiftData = {
   bookings: ShiftBooking[];
 };
 
+export type ScheduleLayout = "LAYOUT_1" | "LAYOUT_2";
+
+export type BriefingData = {
+  id: string;
+  scheduleId: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ScheduleData = {
   id: string;
   organizationId: string;
   weekNumber: number;
   year: number;
   isPublic: boolean;
+  settingsLayout: ScheduleLayout;
+  showTitle: boolean;
+  showPauses: boolean;
   shifts: ShiftData[];
 };
 
