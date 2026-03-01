@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:server": "tsx watch server.ts",
+    "start:server": "node dist/server.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
