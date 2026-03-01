@@ -1,10 +1,25 @@
-export default function PortalInboxPage() {
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { MessageList } from "@/components/portal/message-list";
+import { MessageDetail } from "@/components/portal/message-detail";
+import { Suspense } from "react";
+
+function InboxContent() {
+  const searchParams = useSearchParams();
+  const messageId = searchParams.get("id");
+
+  if (messageId) {
+    return <MessageDetail />;
+  }
+
+  return <MessageList folder="inbox" />;
+}
+
+export default function InboxPage() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Posteingang</h1>
-      <p className="text-muted-foreground">
-        Portal Posteingang - wird implementiert
-      </p>
-    </div>
+    <Suspense fallback={<div className="h-32 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />}>
+      <InboxContent />
+    </Suspense>
   );
 }

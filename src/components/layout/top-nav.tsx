@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
   Clock,
@@ -30,6 +31,14 @@ export { navItems };
 
 export function TopNav() {
   const pathname = usePathname();
+
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["messages", "unread-count"],
+    queryFn: () => fetch("/api/messages/unread-count").then((r) => r.json()),
+    refetchInterval: 30000,
+  });
+
+  const unreadCount = unreadData?.count ?? 0;
 
   function isActive(href: string) {
     const segment = "/" + href.split("/")[1];
@@ -61,7 +70,7 @@ export function TopNav() {
                 key={item.key}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "relative flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active
                     ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
@@ -69,6 +78,11 @@ export function TopNav() {
               >
                 <Icon className="size-4" />
                 <span className="hidden lg:inline">{item.label}</span>
+                {item.key === "portal" && unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
             );
           })}
