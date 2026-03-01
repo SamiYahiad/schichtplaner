@@ -20,6 +20,8 @@ import { cn } from "@/lib/utils";
 interface WeekNavProps {
   weekNumber: number;
   year: number;
+  /** Base URL for navigation, defaults to "/schedule/flexible" */
+  baseUrl?: string;
 }
 
 /**
@@ -30,7 +32,7 @@ function getMaxISOWeek(y: number): number {
   return getISOWeek(new Date(y, 11, 28));
 }
 
-export function WeekNav({ weekNumber, year }: WeekNavProps) {
+export function WeekNav({ weekNumber, year, baseUrl = "/schedule/flexible" }: WeekNavProps) {
   const router = useRouter();
   const currentKW = useMemo(() => getCurrentKW(), []);
   const weekDates = useMemo(
@@ -68,9 +70,9 @@ export function WeekNav({ weekNumber, year }: WeekNavProps) {
 
   const navigateToKW = useCallback(
     (kw: number, kwYear: number) => {
-      router.push(`/schedule/flexible/${formatKW(kw, kwYear)}`);
+      router.push(`${baseUrl}/${formatKW(kw, kwYear)}`);
     },
-    [router]
+    [router, baseUrl]
   );
 
   const navigatePrev = useCallback(() => {
