@@ -14,6 +14,7 @@ import { ShiftForm } from "./shift-form";
 import { EmployeeNav } from "./employee-nav";
 import { ScheduleOptions } from "./schedule-options";
 import { LiveMode, LiveBorder } from "./live-mode";
+import { AISuggestButton } from "./ai-suggest-button";
 import type { ScheduleData, ShiftData } from "@/types/schedule";
 
 interface ScheduleGridProps {
@@ -117,8 +118,12 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
             divisionFilter={divisionFilter}
             onDivisionFilterChange={setDivisionFilter}
           />
-          {/* Live Mode controls */}
-          <LiveMode scheduleId={scheduleId} isManager={isManager} />
+          <div className="flex items-center gap-2">
+            {/* AI Suggest button (manager only) */}
+            {isManager && <AISuggestButton scheduleId={scheduleId} />}
+            {/* Live Mode controls */}
+            <LiveMode scheduleId={scheduleId} isManager={isManager} />
+          </div>
         </div>
       )}
 
