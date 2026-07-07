@@ -218,14 +218,17 @@ cp .env.example .env
 Edit the `.env` file:
 
 ```env
+POSTGRES_USER="schichtplaner"
+POSTGRES_PASSWORD="schichtplaner"
+POSTGRES_DB="schichtplaner"
 DATABASE_URL="postgresql://schichtplaner:schichtplaner@localhost:5432/schichtplaner"
 NEXTAUTH_SECRET="your-secret-key"             # openssl rand -base64 32
 NEXTAUTH_URL="http://localhost:3000"
 ANTHROPIC_API_KEY="sk-ant-..."                # Optional, for AI features
 REDIS_URL="redis://localhost:6379"
 S3_ENDPOINT="http://localhost:9000"
-S3_ACCESS_KEY="minioadmin"
-S3_SECRET_KEY="minioadmin"
+MINIO_ROOT_USER="minioadmin"                  # Also used as the app's S3 access key
+MINIO_ROOT_PASSWORD="minioadmin"              # Also used as the app's S3 secret key
 S3_BUCKET="schichtplaner"
 APP_URL="http://localhost:3000"
 ```
@@ -268,17 +271,22 @@ For a full production setup with automatic HTTPS:
 ```bash
 # Configure production environment
 cp .env.production.example .env
+# Fill in POSTGRES_PASSWORD, MINIO_ROOT_PASSWORD, NEXTAUTH_SECRET and DOMAIN
 
 # Start all services
 docker compose up -d
 ```
 
 The `docker-compose.yml` automatically starts:
-- **PostgreSQL 16** — database
+- **PostgreSQL 16** — database, seeded from `POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB`
 - **Redis 7** — caching
-- **MinIO** — file storage (S3-compatible)
+- **MinIO** — file storage (S3-compatible), seeded from `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` (also used as the app's S3 credentials)
 - **Next.js App** — application (port 3000)
-- **Caddy** — reverse proxy with auto-HTTPS (Let's Encrypt)
+- **Caddy** — reverse proxy with auto-HTTPS (Let's Encrypt), using `DOMAIN` for the certificate
+
+Postgres, Redis and MinIO are only reachable on the internal Compose network, not published to the host.
+
+> **Note:** the production Dockerfile runs Next's standalone `server.js`, not `server.ts`, so the Socket.IO-based real-time features (Live sessions) don't run in this Docker setup yet. See [`AGENTS.md`](AGENTS.md) for details and options.
 
 ## Project Structure
 
@@ -306,7 +314,8 @@ schichtplaner/
 │   │   ├── layout/           # Sidebar, navigation
 │   │   └── ...               # Feature-specific components
 │   └── lib/
-│       ├── auth.ts           # NextAuth configuration
+│       ├── auth.config.ts    # Edge-safe NextAuth config (used by middleware)
+│       ├── auth.ts           # Full NextAuth config (adapter + providers)
 │       ├── db.ts             # Prisma singleton
 │       ├── ai/               # Claude AI integration
 │       ├── hooks/            # Custom React hooks
