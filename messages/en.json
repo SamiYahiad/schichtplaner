@@ -751,6 +751,47 @@
       "createShift": "Shift created",
       "bookEmployee": "Employee booked",
       "getAbsences": "Absences retrieved"
+    },
+    "toolResult": {
+      "unknownTool": "Unknown tool: {toolName}",
+      "noSchedule": "No schedule found for week {weekNumber}/{year}.",
+      "scheduleHeader": "Schedule week {weekNumber}/{year} ({status}):",
+      "published": "published",
+      "notPublished": "not published",
+      "dayNames": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "dayFallback": "Day {day}",
+      "occupiedLabel": "filled",
+      "employeeNotFoundInOrg": "Employee not found or not in this organization.",
+      "hoursWeekSummary": "{name} worked a total of {hours} hours in week {weekNumber}/{year} ({count, plural, one {# shift} other {# shifts}}).",
+      "hoursYearHeader": "{name} - hours {year}:",
+      "hoursYearSummary": "Total: {hours}h ({count, plural, one {# shift} other {# shifts}})",
+      "weekEntryLine": "  Week {week}: {hours}h",
+      "noEmployeesMatching": "No employees found matching \"{query}\".",
+      "divisionsLabel": "Departments",
+      "employeesFoundHeader": "{count, plural, one {# employee found:} other {# employees found:}}",
+      "shiftCreated": "Shift created: {day} {shiftFrom}-{shiftTo} (max. {maxEmployees} employees) in week {weekNumber}/{year}",
+      "shiftNotFound": "Shift not found.",
+      "shiftFullyBooked": "Shift is already fully booked.",
+      "alreadyBookedInShift": "Employee is already booked in this shift.",
+      "employeeNotFound": "Employee not found.",
+      "employeeBooked": "{name} was booked into the shift {day} {shiftFrom}-{shiftTo} (week {weekNumber}).",
+      "noAbsencesFound": "No absences found in the given period.",
+      "absencesFoundHeader": "{count, plural, one {# absence found:} other {# absences found:}}",
+      "dateRange": "{from} to {to}"
+    },
+    "anomaly": {
+      "longShift": "Shift lasts {hours}h ({from} - {to}), limit: {limit}h",
+      "overlap": "Overlap: {aFrom}-{aTo} and {bFrom}-{bTo}",
+      "gap": "Scheduled ({hours}h), but no time record found",
+      "deviation": "{week}: Scheduled {scheduled}h, actual {actual}h ({sign}{percent}%)"
     }
   },
   "meta": {
@@ -770,6 +811,8 @@
     "defaultDivisionDescription": "Default department",
     "alreadyAssigned": "Already assigned",
     "alreadyBookedInShift": "Already booked in this shift",
+    "aiApiError": "AI error: {message}",
+    "aiNoTextResponse": "Claude did not return a text response",
     "alreadyBookedSelf": "You are already booked in this shift",
     "anomalyDetectionDisabled": "Anomaly detection is disabled for this organization",
     "anomalyDetectionFailed": "Anomalies could not be detected",

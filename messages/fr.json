@@ -751,6 +751,47 @@
       "createShift": "Créneau créé",
       "bookEmployee": "Employé affecté",
       "getAbsences": "Absences récupérées"
+    },
+    "toolResult": {
+      "unknownTool": "Outil inconnu : {toolName}",
+      "noSchedule": "Aucun planning trouvé pour la semaine {weekNumber}/{year}.",
+      "scheduleHeader": "Planning semaine {weekNumber}/{year} ({status}) :",
+      "published": "publié",
+      "notPublished": "non publié",
+      "dayNames": [
+        "Lundi",
+        "Mardi",
+        "Mercredi",
+        "Jeudi",
+        "Vendredi",
+        "Samedi",
+        "Dimanche"
+      ],
+      "dayFallback": "Jour {day}",
+      "occupiedLabel": "occupé",
+      "employeeNotFoundInOrg": "Employé introuvable ou n'appartenant pas à cette organisation.",
+      "hoursWeekSummary": "{name} a travaillé au total {hours} heures en semaine {weekNumber}/{year} ({count, plural, one {# créneau} other {# créneaux}}).",
+      "hoursYearHeader": "{name} - heures {year} :",
+      "hoursYearSummary": "Total : {hours}h ({count, plural, one {# créneau} other {# créneaux}})",
+      "weekEntryLine": "  Semaine {week} : {hours}h",
+      "noEmployeesMatching": "Aucun employé trouvé pour \"{query}\".",
+      "divisionsLabel": "Départements",
+      "employeesFoundHeader": "{count, plural, one {# employé trouvé :} other {# employés trouvés :}}",
+      "shiftCreated": "Créneau créé : {day} {shiftFrom}-{shiftTo} (max. {maxEmployees} employés) en semaine {weekNumber}/{year}",
+      "shiftNotFound": "Créneau introuvable.",
+      "shiftFullyBooked": "Le créneau est déjà complet.",
+      "alreadyBookedInShift": "L'employé est déjà affecté à ce créneau.",
+      "employeeNotFound": "Employé introuvable.",
+      "employeeBooked": "{name} a été affecté au créneau {day} {shiftFrom}-{shiftTo} (semaine {weekNumber}).",
+      "noAbsencesFound": "Aucune absence trouvée pour la période indiquée.",
+      "absencesFoundHeader": "{count, plural, one {# absence trouvée :} other {# absences trouvées :}}",
+      "dateRange": "du {from} au {to}"
+    },
+    "anomaly": {
+      "longShift": "Le créneau dure {hours}h ({from} - {to}), limite : {limit}h",
+      "overlap": "Chevauchement : {aFrom}-{aTo} et {bFrom}-{bTo}",
+      "gap": "Prévu ({hours}h), mais aucune saisie de temps trouvée",
+      "deviation": "{week} : prévu {scheduled}h, réel {actual}h ({sign}{percent}%)"
     }
   },
   "meta": {
@@ -770,6 +811,8 @@
     "defaultDivisionDescription": "Département par défaut",
     "alreadyAssigned": "Déjà affecté",
     "alreadyBookedInShift": "Déjà affecté à ce créneau",
+    "aiApiError": "Erreur IA : {message}",
+    "aiNoTextResponse": "Claude n'a pas renvoyé de réponse textuelle",
     "alreadyBookedSelf": "Vous êtes déjà inscrit à ce créneau",
     "anomalyDetectionDisabled": "La détection d'anomalies est désactivée pour cette organisation",
     "anomalyDetectionFailed": "Les anomalies n'ont pas pu être détectées",

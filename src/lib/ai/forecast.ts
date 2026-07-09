@@ -6,8 +6,10 @@
  * data points + forecast for visualization.
  */
 
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { generateAIResponse } from "./client";
+import { getResponseLanguageDirective } from "./locale-instruction";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -124,6 +126,7 @@ export async function generateForecast(
   orgId: string,
   options?: { generateSummary?: boolean }
 ): Promise<ForecastResult> {
+  const t = await getTranslations();
   const current = getCurrentISOWeek();
   const LOOKBACK_WEEKS = 12;
   const FORECAST_WEEKS = 4;
@@ -192,7 +195,7 @@ export async function generateForecast(
     dataPoints.push({
       weekNumber: w.weekNumber,
       year: w.year,
-      label: `KW ${w.weekNumber}`,
+      label: t("time.weekAbbrev", { week: w.weekNumber }),
       actualHours: Math.round(actualHours * 10) / 10,
       employeeCount: employeeSet.size,
       shiftCount,
@@ -234,7 +237,7 @@ export async function generateForecast(
     dataPoints.push({
       weekNumber: fwk,
       year: fyr,
-      label: `KW ${fwk}`,
+      label: t("time.weekAbbrev", { week: fwk }),
       actualHours: 0,
       employeeCount: 0,
       shiftCount: 0,
@@ -294,11 +297,11 @@ export async function generateForecast(
         totalEmployees,
       };
 
+      const languageDirective = await getResponseLanguageDirective();
       const aiResponse = await generateAIResponse({
         orgId,
         feature: "forecast",
-        systemPrompt:
-          "Du bist ein Analyst fuer Schichtplanung. Erstelle eine kurze, praegnante Zusammenfassung (3-5 Saetze) der Stunden-Trends und Prognose. Nenne konkrete Zahlen. Antworte auf Deutsch.",
+        systemPrompt: `Du bist ein Analyst fuer Schichtplanung. Erstelle eine kurze, praegnante Zusammenfassung (3-5 Saetze) der Stunden-Trends und Prognose. Nenne konkrete Zahlen. ${languageDirective}`,
         userMessage: `Analysiere diese Schichtplan-Daten:\n${JSON.stringify(summaryData, null, 2)}`,
         maxTokens: 500,
       });

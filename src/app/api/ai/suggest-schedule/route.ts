@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         ...s,
         employeeName: user
           ? `${user.firstName} ${user.lastName}`
-          : "Unbekannt",
+          : t("portal.unknownUser"),
         employeeImage: user?.profileImage ?? null,
       };
     });

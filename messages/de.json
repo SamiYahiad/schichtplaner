@@ -751,6 +751,47 @@
       "createShift": "Schicht erstellt",
       "bookEmployee": "Mitarbeiter eingebucht",
       "getAbsences": "Abwesenheiten abgerufen"
+    },
+    "toolResult": {
+      "unknownTool": "Unbekanntes Tool: {toolName}",
+      "noSchedule": "Kein Schichtplan für KW {weekNumber}/{year} gefunden.",
+      "scheduleHeader": "Schichtplan KW {weekNumber}/{year} ({status}):",
+      "published": "veröffentlicht",
+      "notPublished": "nicht veröffentlicht",
+      "dayNames": [
+        "Montag",
+        "Dienstag",
+        "Mittwoch",
+        "Donnerstag",
+        "Freitag",
+        "Samstag",
+        "Sonntag"
+      ],
+      "dayFallback": "Tag {day}",
+      "occupiedLabel": "belegt",
+      "employeeNotFoundInOrg": "Mitarbeiter nicht gefunden oder nicht in dieser Organisation.",
+      "hoursWeekSummary": "{name} hat in KW {weekNumber}/{year} insgesamt {hours} Stunden ({count, plural, one {# Schicht} other {# Schichten}}).",
+      "hoursYearHeader": "{name} - Stunden {year}:",
+      "hoursYearSummary": "Gesamt: {hours}h ({count, plural, one {# Schicht} other {# Schichten}})",
+      "weekEntryLine": "  KW {week}: {hours}h",
+      "noEmployeesMatching": "Keine Mitarbeiter mit \"{query}\" gefunden.",
+      "divisionsLabel": "Bereiche",
+      "employeesFoundHeader": "{count, plural, one {# Mitarbeiter gefunden:} other {# Mitarbeiter gefunden:}}",
+      "shiftCreated": "Schicht erstellt: {day} {shiftFrom}-{shiftTo} (max. {maxEmployees} Mitarbeiter) in KW {weekNumber}/{year}",
+      "shiftNotFound": "Schicht nicht gefunden.",
+      "shiftFullyBooked": "Schicht ist bereits voll belegt.",
+      "alreadyBookedInShift": "Mitarbeiter ist bereits in dieser Schicht gebucht.",
+      "employeeNotFound": "Mitarbeiter nicht gefunden.",
+      "employeeBooked": "{name} wurde in die Schicht {day} {shiftFrom}-{shiftTo} (KW {weekNumber}) eingebucht.",
+      "noAbsencesFound": "Keine Abwesenheiten im angegebenen Zeitraum gefunden.",
+      "absencesFoundHeader": "{count, plural, one {# Abwesenheit gefunden:} other {# Abwesenheiten gefunden:}}",
+      "dateRange": "{from} bis {to}"
+    },
+    "anomaly": {
+      "longShift": "Schicht dauert {hours}h ({from} - {to}), Limit: {limit}h",
+      "overlap": "Überlappung: {aFrom}-{aTo} und {bFrom}-{bTo}",
+      "gap": "Eingeplant ({hours}h), aber keine Zeiterfassung vorhanden",
+      "deviation": "{week}: Soll {scheduled}h, Ist {actual}h ({sign}{percent}%)"
     }
   },
   "meta": {
@@ -770,6 +811,8 @@
     "defaultDivisionDescription": "Standard-Arbeitsbereich",
     "alreadyAssigned": "Bereits zugewiesen",
     "alreadyBookedInShift": "Bereits in dieser Schicht gebucht",
+    "aiApiError": "KI-Fehler: {message}",
+    "aiNoTextResponse": "Claude hat keine Textantwort zurückgegeben",
     "alreadyBookedSelf": "Du bist bereits in dieser Schicht eingetragen",
     "anomalyDetectionDisabled": "Anomalie-Erkennung ist für diese Organisation deaktiviert",
     "anomalyDetectionFailed": "Anomalien konnten nicht erkannt werden",
