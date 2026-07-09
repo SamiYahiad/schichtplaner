@@ -1,24 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import { emitToOrg, emitToSchedule } from "@/lib/emit";
 
 const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const createShiftSchema = z.object({
-  scheduleId: z.string().min(1, "scheduleId ist erforderlich"),
-  divisionId: z.string().optional().nullable(),
-  dayOfWeek: z.number().int().min(1).max(7),
-  shiftFrom: z.string().regex(TIME_REGEX, "Ungueltige Startzeit (HH:MM)"),
-  shiftTo: z.string().regex(TIME_REGEX, "Ungueltige Endzeit (HH:MM)"),
-  maxEmployees: z.number().int().min(1, "Mindestens 1 Mitarbeiter"),
-  pauseOption: z.enum(["PER_HOUR", "PER_SHIFT"]).optional(),
-  pauseValue: z.number().int().min(0).optional(),
-  title: z.string().max(100).optional().nullable(),
-  description: z.string().max(500).optional().nullable(),
-  repeatDays: z.array(z.number().int().min(1).max(7)).optional(),
-});
+function buildCreateShiftSchema(t: (key: string) => string) {
+  return z.object({
+    scheduleId: z.string().min(1, t("errors.scheduleIdRequired")),
+    divisionId: z.string().optional().nullable(),
+    dayOfWeek: z.number().int().min(1).max(7),
+    shiftFrom: z.string().regex(TIME_REGEX, t("errors.invalidStartTime")),
+    shiftTo: z.string().regex(TIME_REGEX, t("errors.invalidEndTime")),
+    maxEmployees: z.number().int().min(1, t("errors.minOneEmployee")),
+    pauseOption: z.enum(["PER_HOUR", "PER_SHIFT"]).optional(),
+    pauseValue: z.number().int().min(0).optional(),
+    title: z.string().max(100).optional().nullable(),
+    description: z.string().max(500).optional().nullable(),
+    repeatDays: z.array(z.number().int().min(1).max(7)).optional(),
+  });
+}
 
 /**
  * POST /api/shifts
@@ -27,26 +30,28 @@ const createShiftSchema = z.object({
  * a shift is created for each specified day.
  */
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
+  const createShiftSchema = buildCreateShiftSchema(t);
   const parsed = createShiftSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -56,7 +61,7 @@ export async function POST(request: NextRequest) {
   // Validate shiftFrom < shiftTo
   if (data.shiftFrom >= data.shiftTo) {
     return NextResponse.json(
-      { error: "Startzeit muss vor Endzeit liegen" },
+      { error: t("errors.startBeforeEnd") },
       { status: 400 }
     );
   }
@@ -72,7 +77,7 @@ export async function POST(request: NextRequest) {
 
   if (!schedule) {
     return NextResponse.json(
-      { error: "Schichtplan nicht gefunden" },
+      { error: t("errors.scheduleNotFound") },
       { status: 404 }
     );
   }
@@ -88,7 +93,7 @@ export async function POST(request: NextRequest) {
     });
     if (!division) {
       return NextResponse.json(
-        { error: "Arbeitsbereich nicht gefunden" },
+        { error: t("errors.divisionNotFound") },
         { status: 404 }
       );
     }

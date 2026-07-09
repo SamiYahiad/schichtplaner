@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getTranslations("errors");
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
       <div className="mx-auto max-w-md text-center">
@@ -8,16 +11,16 @@ export default function NotFound() {
           404
         </h1>
         <h2 className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Seite nicht gefunden
+          {t("notFoundTitle")}
         </h2>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
-          Die angeforderte Seite existiert nicht oder wurde verschoben.
+          {t("notFoundDescription")}
         </p>
         <Link
           href="/schedule/flexible"
           className="mt-8 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
         >
-          Zum Dashboard
+          {t("goToDashboard")}
         </Link>
       </div>
     </div>

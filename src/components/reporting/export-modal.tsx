@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Download, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,20 +20,20 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
-const MONTH_NAMES = [
-  "Januar",
-  "Februar",
-  "Maerz",
-  "April",
-  "Mai",
-  "Juni",
-  "Juli",
-  "August",
-  "September",
-  "Oktober",
-  "November",
-  "Dezember",
-];
+const MONTH_KEYS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+] as const;
 
 type ExportFormat = "csv" | "pdf" | "excel";
 
@@ -49,6 +50,8 @@ export function ExportModal({
   defaultMonth,
   defaultYear,
 }: ExportModalProps) {
+  const t = useTranslations();
+  const MONTH_NAMES = MONTH_KEYS.map((key) => t(`reporting.months.${key}`));
   const [format, setFormat] = useState<ExportFormat>("csv");
   const [month, setMonth] = useState(String(defaultMonth));
   const [year, setYear] = useState(String(defaultYear));
@@ -59,7 +62,7 @@ export function ExportModal({
 
   async function handleExport() {
     if (format !== "csv") {
-      toast.error("Dieses Format ist noch nicht verfuegbar");
+      toast.error(t("reporting.formatNotAvailable"));
       return;
     }
 
@@ -70,24 +73,24 @@ export function ExportModal({
       );
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Export fehlgeschlagen");
+        throw new Error(data.error || t("reporting.exportFailed"));
       }
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Auswertung_${MONTH_NAMES[parseInt(month) - 1]}_${year}.csv`;
+      a.download = `${t("reporting.title")}_${MONTH_NAMES[parseInt(month) - 1]}_${year}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Export erfolgreich heruntergeladen");
+      toast.success(t("reporting.exportSuccess"));
       onOpenChange(false);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Export fehlgeschlagen"
+        err instanceof Error ? err.message : t("reporting.exportFailed")
       );
     } finally {
       setIsExporting(false);
@@ -98,13 +101,13 @@ export function ExportModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Auswertung exportieren</DialogTitle>
+          <DialogTitle>{t("reporting.exportTitle")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
           {/* Format selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Format</label>
+            <label className="text-sm font-medium">{t("reporting.format")}</label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
@@ -130,7 +133,7 @@ export function ExportModal({
                   variant="secondary"
                   className="absolute -top-1.5 -right-1.5 text-[10px] px-1 py-0"
                 >
-                  Bald
+                  {t("reporting.soon")}
                 </Badge>
               </button>
               <button
@@ -145,7 +148,7 @@ export function ExportModal({
                   variant="secondary"
                   className="absolute -top-1.5 -right-1.5 text-[10px] px-1 py-0"
                 >
-                  Bald
+                  {t("reporting.soon")}
                 </Badge>
               </button>
             </div>
@@ -154,7 +157,7 @@ export function ExportModal({
           {/* Month + Year selection */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Monat</label>
+              <label className="text-sm font-medium">{t("reporting.month")}</label>
               <Select value={month} onValueChange={setMonth}>
                 <SelectTrigger>
                   <SelectValue />
@@ -169,7 +172,7 @@ export function ExportModal({
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Jahr</label>
+              <label className="text-sm font-medium">{t("reporting.year")}</label>
               <Select value={year} onValueChange={setYear}>
                 <SelectTrigger>
                   <SelectValue />
@@ -196,7 +199,7 @@ export function ExportModal({
             ) : (
               <Download className="size-4" />
             )}
-            {isExporting ? "Exportiere..." : "Herunterladen"}
+            {isExporting ? t("reporting.exporting") : t("reporting.download")}
           </Button>
         </div>
       </DialogContent>

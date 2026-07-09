@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   startOfMonth,
   endOfMonth,
@@ -18,7 +19,7 @@ import {
 import { ChevronLeft, ChevronRight, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { dayNames, formatKW, monthNames } from "@/lib/utils/calendar";
+import { formatKW } from "@/lib/utils/calendar";
 import { cn } from "@/lib/utils";
 import type { ScheduleData } from "@/types/schedule";
 
@@ -39,6 +40,9 @@ type MonthScheduleResult = {
  */
 export function MonthGrid({ month, year }: MonthGridProps) {
   const router = useRouter();
+  const t = useTranslations();
+  const dayNames = t.raw("schedule.dayNamesShort") as string[];
+  const monthNames = t.raw("schedule.monthsShort") as string[];
 
   // Calculate all the KWs this month spans and all calendar days
   const { weeks, calendarDays } = useMemo(() => {
@@ -234,14 +238,14 @@ export function MonthGrid({ month, year }: MonthGridProps) {
                         <span className="font-medium text-foreground">
                           {stats.shiftCount}
                         </span>
-                        {stats.shiftCount === 1 ? "Schicht" : "Schichten"}
+                        {t("schedule.shiftWord", { count: stats.shiftCount })}
                       </div>
                       <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Users className="size-2.5" />
                         <span className="font-medium text-foreground">
                           {stats.bookingCount}
                         </span>
-                        gebucht
+                        {t("schedule.bookedLabel")}
                       </div>
                     </div>
                   )}

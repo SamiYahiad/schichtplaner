@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember } from "@/lib/auth-helpers";
@@ -13,9 +14,10 @@ const watchActionSchema = z.object({
 
 // GET /api/time/watch — get current running watch for this user
 export async function GET() {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   // A running watch has type=WATCH, timeTo=null
@@ -36,22 +38,23 @@ export async function GET() {
 
 // POST /api/time/watch — start or stop stopwatch
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = watchActionSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
     });
     if (existing) {
       return NextResponse.json(
-        { error: "A stopwatch is already running" },
+        { error: t("errors.stopwatchAlreadyRunning") },
         { status: 409 }
       );
     }
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
 
   if (!running) {
     return NextResponse.json(
-      { error: "No running stopwatch found" },
+      { error: t("errors.noRunningStopwatch") },
       { status: 404 }
     );
   }

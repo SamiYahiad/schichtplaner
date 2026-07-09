@@ -2,6 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { LogOut, Moon, Sun } from "lucide-react";
 import {
   DropdownMenu,
@@ -14,10 +15,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useCurrentMember } from "@/lib/hooks/use-current-member";
+import { LocaleSwitcher } from "./locale-switcher";
 
 export function UserMenu() {
   const { data: member } = useCurrentMember();
   const { theme, setTheme } = useTheme();
+  const t = useTranslations();
 
   const firstName = member?.user.firstName ?? "";
   const lastName = member?.user.lastName ?? "";
@@ -40,7 +43,7 @@ export function UserMenu() {
             </AvatarFallback>
           </Avatar>
           <span className="hidden text-sm font-medium lg:inline">
-            {fullName || "Laden..."}
+            {fullName || t("common.loading")}
           </span>
         </Button>
       </DropdownMenuTrigger>
@@ -69,15 +72,16 @@ export function UserMenu() {
           ) : (
             <Moon className="mr-2 size-4" />
           )}
-          {theme === "dark" ? "Hellmodus" : "Dunkelmodus"}
+          {theme === "dark" ? t("common.lightMode") : t("common.darkMode")}
         </DropdownMenuItem>
+        <LocaleSwitcher />
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOut({ callbackUrl: "/login" })}
           variant="destructive"
         >
           <LogOut className="mr-2 size-4" />
-          Abmelden
+          {t("auth.logout")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

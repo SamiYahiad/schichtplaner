@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { useCurrentMember } from "@/lib/hooks/use-current-member";
 import {
@@ -54,6 +55,7 @@ type SettingsResponse = {
 // ---------- Component ----------
 
 export default function SettingsPage() {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const { data: currentMember, isLoading: memberLoading } = useCurrentMember();
   const [activeSection, setActiveSection] =
@@ -67,7 +69,7 @@ export default function SettingsPage() {
     queryKey: ["settings"],
     queryFn: async () => {
       const res = await fetch("/api/settings");
-      if (!res.ok) throw new Error("Fehler beim Laden der Einstellungen");
+      if (!res.ok) throw new Error(t("settings.loadError"));
       return res.json();
     },
     enabled: isAdmin,
@@ -83,12 +85,12 @@ export default function SettingsPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error || "Fehler beim Speichern");
+        throw new Error(d.error || t("settings.saveError"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Einstellungen gespeichert");
+      toast.success(t("settings.saved"));
       queryClient.invalidateQueries({ queryKey: ["settings"] });
     },
     onError: (err: Error) => {
@@ -114,9 +116,9 @@ export default function SettingsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
         <ShieldAlert className="size-12 text-muted-foreground/50" />
-        <h2 className="text-xl font-semibold">Zugriff verweigert</h2>
+        <h2 className="text-xl font-semibold">{t("settings.accessDenied")}</h2>
         <p className="text-sm text-muted-foreground">
-          Nur Administratoren und Inhaber koennen die Einstellungen bearbeiten.
+          {t("settings.accessDeniedDescription")}
         </p>
       </div>
     );
@@ -147,7 +149,7 @@ export default function SettingsPage() {
         />
         <div className="flex-1">
           <Card className="p-6 text-center text-destructive">
-            Fehler beim Laden der Einstellungen. Bitte versuche es erneut.
+            {t("settings.loadErrorRetry")}
           </Card>
         </div>
       </div>
@@ -163,9 +165,9 @@ export default function SettingsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Einstellungen</h1>
+        <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Organisation und Systemeinstellungen verwalten
+          {t("settings.subtitle")}
         </p>
       </div>
 
@@ -187,12 +189,12 @@ export default function SettingsPage() {
             }
             className="w-full rounded-md border bg-background px-3 py-2 text-sm mb-4"
           >
-            <option value="schedule">Schichtplan</option>
-            <option value="time">Zeiterfassung</option>
-            <option value="wishplan">Wunschplaene</option>
-            <option value="employees">Mitarbeiter</option>
-            <option value="absences">Abwesenheiten</option>
-            <option value="account">Account</option>
+            <option value="schedule">{t("settings.schedule")}</option>
+            <option value="time">{t("settings.timeTracking")}</option>
+            <option value="wishplan">{t("settings.wishPlans")}</option>
+            <option value="employees">{t("settings.employees")}</option>
+            <option value="absences">{t("settings.absences")}</option>
+            <option value="account">{t("settings.account")}</option>
           </select>
         </div>
 
@@ -218,16 +220,15 @@ export default function SettingsPage() {
           {activeSection === "wishplan" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-semibold">Wunschplaene</h2>
+                <h2 className="text-xl font-semibold">{t("settings.wishPlans")}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Einstellungen fuer Wunschplaene
+                  {t("settings.wishPlanSettingsDescription")}
                 </p>
               </div>
               <Card className="flex flex-col items-center justify-center p-12 text-center">
-                <p className="text-lg font-medium">Bald verfuegbar</p>
+                <p className="text-lg font-medium">{t("settings.comingSoon")}</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Die Einstellungen fuer Wunschplaene werden in einem zukuenftigen
-                  Update hinzugefuegt.
+                  {t("settings.wishPlanComingSoonDescription")}
                 </p>
               </Card>
             </div>
@@ -236,16 +237,15 @@ export default function SettingsPage() {
           {activeSection === "employees" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-semibold">Mitarbeiter</h2>
+                <h2 className="text-xl font-semibold">{t("settings.employees")}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Mitarbeiter-Einstellungen
+                  {t("settings.employeeSettingsDescription")}
                 </p>
               </div>
               <Card className="flex flex-col items-center justify-center p-12 text-center">
-                <p className="text-lg font-medium">Bald verfuegbar</p>
+                <p className="text-lg font-medium">{t("settings.comingSoon")}</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Weitere Mitarbeiter-Einstellungen werden in einem zukuenftigen
-                  Update hinzugefuegt.
+                  {t("settings.employeeComingSoonDescription")}
                 </p>
               </Card>
             </div>

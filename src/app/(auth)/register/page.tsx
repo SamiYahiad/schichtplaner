@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +41,7 @@ export default function RegisterPage() {
       setError(
         typeof err.error === "string"
           ? err.error
-          : "Registrierung fehlgeschlagen"
+          : t("auth.registrationFailed")
       );
       setLoading(false);
       return;
@@ -59,34 +61,34 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            Firma registrieren
+            {t("auth.registerCompany")}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Erstelle deinen Schichtplaner-Account
+            {t("auth.registerSubtitle")}
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">Vorname</Label>
+                <Label htmlFor="firstName">{t("auth.firstName")}</Label>
                 <Input id="firstName" name="firstName" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Nachname</Label>
+                <Label htmlFor="lastName">{t("auth.lastName")}</Label>
                 <Input id="lastName" name="lastName" required />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="companyName">Firmenname</Label>
+              <Label htmlFor="companyName">{t("auth.companyName")}</Label>
               <Input id="companyName" name="companyName" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">E-Mail</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input id="email" name="email" type="email" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Passwort (min. 6 Zeichen)</Label>
+              <Label htmlFor="password">{t("auth.passwordMinLength")}</Label>
               <Input
                 id="password"
                 name="password"
@@ -97,13 +99,13 @@ export default function RegisterPage() {
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Wird erstellt..." : "Registrieren"}
+              {loading ? t("auth.creatingAccount") : t("auth.register")}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Bereits registriert?{" "}
+            {t("auth.alreadyRegistered")}{" "}
             <Link href="/login" className="text-primary hover:underline">
-              Anmelden
+              {t("auth.login")}
             </Link>
           </p>
         </CardContent>

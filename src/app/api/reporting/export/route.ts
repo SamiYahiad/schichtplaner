@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import {
@@ -60,13 +61,14 @@ function escapeCsvField(field: string): string {
 
 // GET /api/reporting/export?month=3&year=2026&format=csv
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { searchParams } = request.nextUrl;
@@ -80,21 +82,21 @@ export async function GET(request: NextRequest) {
 
   if (month < 1 || month > 12 || isNaN(month) || isNaN(year)) {
     return NextResponse.json(
-      { error: "Invalid month or year" },
+      { error: t("errors.invalidMonthOrYear") },
       { status: 400 }
     );
   }
 
   if (format === "pdf") {
     return NextResponse.json(
-      { error: "PDF export not yet implemented" },
+      { error: t("errors.pdfExportNotImplemented") },
       { status: 501 }
     );
   }
 
   if (format === "excel") {
     return NextResponse.json(
-      { error: "Excel export not yet implemented" },
+      { error: t("errors.excelExportNotImplemented") },
       { status: 501 }
     );
   }
@@ -197,21 +199,12 @@ export async function GET(request: NextRequest) {
 
   const csv = [headerRow, ...dataRows].join("\n");
 
-  const monthNames = [
-    "Januar",
-    "Februar",
-    "Maerz",
-    "April",
-    "Mai",
-    "Juni",
-    "Juli",
-    "August",
-    "September",
-    "Oktober",
-    "November",
-    "Dezember",
-  ];
-  const filename = `Auswertung_${monthNames[month - 1]}_${year}.csv`;
+  const monthKeys = [
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+  ] as const;
+  const monthNames = monthKeys.map((key) => t(`reporting.months.${key}`));
+  const filename = `${t("reporting.title")}_${monthNames[month - 1]}_${year}.csv`;
 
   return new NextResponse(csv, {
     status: 200,

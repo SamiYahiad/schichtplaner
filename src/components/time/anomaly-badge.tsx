@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   ChevronDown,
@@ -43,13 +44,6 @@ type AnomalyResponse = {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-const TYPE_LABELS: Record<AnomalyType, string> = {
-  long_shift: "Lange Schicht",
-  gap: "Fehlende Erfassung",
-  overlap: "Ueberlappung",
-  deviation: "Soll/Ist-Abweichung",
-};
-
 const TYPE_ICONS: Record<AnomalyType, React.ReactNode> = {
   long_shift: <Clock className="size-3.5" />,
   gap: <Layers className="size-3.5" />,
@@ -67,7 +61,15 @@ interface AnomalyBadgeProps {
 }
 
 export function AnomalyBadge({ month, isManager }: AnomalyBadgeProps) {
+  const t = useTranslations();
   const [expanded, setExpanded] = useState(false);
+
+  const TYPE_LABELS: Record<AnomalyType, string> = {
+    long_shift: t("time.anomalyLongShift"),
+    gap: t("time.anomalyGap"),
+    overlap: t("time.anomalyOverlap"),
+    deviation: t("time.anomalyDeviation"),
+  };
 
   const { data, isLoading, error } = useQuery<AnomalyResponse>({
     queryKey: ["anomalies", month],
@@ -76,7 +78,7 @@ export function AnomalyBadge({ month, isManager }: AnomalyBadgeProps) {
       if (!res.ok) {
         // If forbidden or feature disabled, return empty
         if (res.status === 403) return { anomalies: [], summary: { total: 0, critical: 0, warning: 0 } };
-        throw new Error("Fehler beim Laden der Anomalien");
+        throw new Error(t("time.anomalyLoadError"));
       }
       return res.json();
     },
@@ -91,7 +93,7 @@ export function AnomalyBadge({ month, isManager }: AnomalyBadgeProps) {
     return (
       <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
         <Loader2 className="size-3 animate-spin" />
-        Pruefe...
+        {t("time.checkingAnomalies")}
       </Badge>
     );
   }
@@ -116,14 +118,14 @@ export function AnomalyBadge({ month, isManager }: AnomalyBadgeProps) {
       >
         <AlertTriangle className="size-3.5" />
         <span className="text-xs font-medium">
-          {summary.total} Anomalie{summary.total !== 1 ? "n" : ""}
+          {t("time.anomaliesCount", { count: summary.total })}
         </span>
         {summary.critical > 0 && (
           <Badge
             variant="destructive"
             className="text-[9px] px-1 py-0 h-4"
           >
-            {summary.critical} kritisch
+            {t("time.criticalLabel", { count: summary.critical })}
           </Badge>
         )}
         {expanded ? (

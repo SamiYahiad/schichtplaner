@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isAdminOrAbove } from "@/lib/auth-helpers";
 
@@ -16,9 +17,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { id } = await params;
@@ -31,7 +33,7 @@ export async function PATCH(
   });
 
   if (!absence) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   // Verify user is in the same org
@@ -43,20 +45,20 @@ export async function PATCH(
     },
   });
   if (!orgMember) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = updateAbsenceSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -67,7 +69,7 @@ export async function PATCH(
   if (data.status && (data.status === "APPROVED" || data.status === "DECLINED")) {
     if (!isAdmin) {
       return NextResponse.json(
-        { error: "Only admins can approve or decline absences" },
+        { error: t("errors.onlyAdminsCanApproveDecline") },
         { status: 403 }
       );
     }
@@ -76,11 +78,11 @@ export async function PATCH(
   // Non-admins can only edit their own PENDING absences
   if (!isAdmin) {
     if (absence.userId !== member.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
     }
     if (absence.status !== "PENDING") {
       return NextResponse.json(
-        { error: "Can only edit pending absences" },
+        { error: t("errors.canOnlyEditPendingAbsences") },
         { status: 400 }
       );
     }
@@ -111,7 +113,7 @@ export async function PATCH(
     });
     if (!category) {
       return NextResponse.json(
-        { error: "Category not found" },
+        { error: t("errors.categoryNotFound") },
         { status: 404 }
       );
     }
@@ -149,9 +151,10 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { id } = await params;
@@ -160,7 +163,7 @@ export async function DELETE(
   // Find the absence
   const absence = await db.absence.findUnique({ where: { id } });
   if (!absence) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   // Verify user is in the same org
@@ -172,17 +175,17 @@ export async function DELETE(
     },
   });
   if (!orgMember) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   // Admin+ can always delete. Employees can delete their own PENDING absences only.
   if (!isAdmin) {
     if (absence.userId !== member.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
     }
     if (absence.status !== "PENDING") {
       return NextResponse.json(
-        { error: "Can only delete pending absences" },
+        { error: t("errors.canOnlyDeletePendingAbsences") },
         { status: 400 }
       );
     }

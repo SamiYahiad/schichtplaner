@@ -5,10 +5,12 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL, max: 1 });
+
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+    adapter,
     log: process.env.NODE_ENV === "development" ? ["query"] : [],
   });
 

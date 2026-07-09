@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 
@@ -26,9 +27,10 @@ async function getScheduleForMember(scheduleId: string, orgId: string) {
  * Get the briefing for a schedule. Returns the first (most recent) briefing.
  */
 export async function GET(_request: NextRequest, context: RouteContext) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { id } = await context.params;
@@ -36,7 +38,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   const schedule = await getScheduleForMember(id, member.organizationId);
   if (!schedule) {
     return NextResponse.json(
-      { error: "Schichtplan nicht gefunden" },
+      { error: t("errors.scheduleNotFound") },
       { status: 404 }
     );
   }
@@ -49,9 +51,11 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   return NextResponse.json({ briefing: briefing ?? null });
 }
 
-const briefingSchema = z.object({
-  text: z.string().min(1, "Text darf nicht leer sein").max(5000),
-});
+function buildBriefingSchema(t: (key: string) => string) {
+  return z.object({
+    text: z.string().min(1, t("errors.briefingTextRequired")).max(5000),
+  });
+}
 
 /**
  * POST /api/schedules/:id/briefing
@@ -61,13 +65,14 @@ const briefingSchema = z.object({
  * Manager+ only.
  */
 export async function POST(request: NextRequest, context: RouteContext) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { id } = await context.params;
@@ -75,7 +80,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const schedule = await getScheduleForMember(id, member.organizationId);
   if (!schedule) {
     return NextResponse.json(
-      { error: "Schichtplan nicht gefunden" },
+      { error: t("errors.scheduleNotFound") },
       { status: 404 }
     );
   }
@@ -84,13 +89,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
+  const briefingSchema = buildBriefingSchema(t);
   const parsed = briefingSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -125,13 +131,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
  * Manager+ only.
  */
 export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { id } = await context.params;
@@ -139,7 +146,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   const schedule = await getScheduleForMember(id, member.organizationId);
   if (!schedule) {
     return NextResponse.json(
-      { error: "Schichtplan nicht gefunden" },
+      { error: t("errors.scheduleNotFound") },
       { status: 404 }
     );
   }

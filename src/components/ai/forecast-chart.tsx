@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -50,6 +51,8 @@ function CustomTooltip({
   payload?: TooltipPayloadEntry[];
   label?: string;
 }) {
+  const t = useTranslations();
+
   if (!active || !payload || payload.length === 0) return null;
 
   // Access the raw data point from the first entry
@@ -59,7 +62,7 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border bg-white dark:bg-slate-900 p-3 shadow-lg text-sm">
       <p className="font-semibold mb-1">
-        {label} {isForecast && "(Prognose)"}
+        {label} {isForecast && `(${t("ai.forecast")})`}
       </p>
       {payload.map((entry, idx) => {
         if (entry.value === 0 && entry.dataKey === "actualHours" && isForecast)
@@ -78,8 +81,8 @@ function CustomTooltip({
       })}
       {rawData && !isForecast && (
         <div className="mt-1 pt-1 border-t text-xs text-muted-foreground">
-          <p>{rawData.employeeCount} Mitarbeiter</p>
-          <p>{rawData.shiftCount} Schichten</p>
+          <p>{rawData.employeeCount} {t("employees.title")}</p>
+          <p>{rawData.shiftCount} {t("ai.shifts")}</p>
         </div>
       )}
     </div>
@@ -89,6 +92,7 @@ function CustomTooltip({
 // ─── Chart Component ────────────────────────────────────────────────
 
 export function ForecastChart({ dataPoints, summary }: ForecastChartProps) {
+  const t = useTranslations();
   // Find the index where forecast starts
   const forecastStartIdx = dataPoints.findIndex((d) => d.isForecast);
 
@@ -143,7 +147,7 @@ export function ForecastChart({ dataPoints, summary }: ForecastChartProps) {
               tickLine={false}
               axisLine={false}
               label={{
-                value: "Stunden",
+                value: t("time.hours"),
                 angle: -90,
                 position: "insideLeft",
                 style: { fontSize: 12, fill: "#94a3b8" },
@@ -161,7 +165,7 @@ export function ForecastChart({ dataPoints, summary }: ForecastChartProps) {
                 stroke="#94a3b8"
                 strokeDasharray="3 3"
                 label={{
-                  value: "Prognose",
+                  value: t("ai.forecast"),
                   position: "top",
                   fill: "#94a3b8",
                   fontSize: 11,
@@ -177,7 +181,7 @@ export function ForecastChart({ dataPoints, summary }: ForecastChartProps) {
               stroke="none"
               fill="#818cf8"
               fillOpacity={0.1}
-              name="Prognose-Bereich"
+              name={t("ai.forecastRange")}
               connectNulls={false}
             />
 
@@ -189,7 +193,7 @@ export function ForecastChart({ dataPoints, summary }: ForecastChartProps) {
               strokeWidth={2}
               dot={{ r: 3, fill: "#6366f1" }}
               activeDot={{ r: 5 }}
-              name="Ist-Stunden"
+              name={t("ai.actualHours")}
               connectNulls={false}
             />
 
@@ -201,7 +205,7 @@ export function ForecastChart({ dataPoints, summary }: ForecastChartProps) {
               strokeWidth={1.5}
               strokeDasharray="5 5"
               dot={false}
-              name="Gleitender Durchschnitt"
+              name={t("ai.movingAverage")}
               connectNulls={false}
             />
 
@@ -213,7 +217,7 @@ export function ForecastChart({ dataPoints, summary }: ForecastChartProps) {
               strokeWidth={2}
               strokeDasharray="8 4"
               dot={{ r: 3, fill: "#f59e0b" }}
-              name="Prognose"
+              name={t("ai.forecast")}
               connectNulls={false}
             />
           </ComposedChart>
@@ -224,7 +228,7 @@ export function ForecastChart({ dataPoints, summary }: ForecastChartProps) {
       {summary && (
         <div className="rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 p-4">
           <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-1">
-            KI-Analyse
+            {t("ai.aiAnalysis")}
           </p>
           <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
             {summary}

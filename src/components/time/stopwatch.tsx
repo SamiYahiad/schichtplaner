@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Play, Square, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ function formatElapsed(totalSeconds: number): string {
 }
 
 export function Stopwatch() {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const [elapsed, setElapsed] = useState(0);
   const [showStopForm, setShowStopForm] = useState(false);
@@ -124,12 +126,12 @@ export function Stopwatch() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Starten");
+        throw new Error(data.error || t("time.startError"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Stoppuhr gestartet");
+      toast.success(t("time.watchStarted"));
       queryClient.invalidateQueries({ queryKey: ["time-watch"] });
     },
     onError: (error: Error) => {
@@ -151,12 +153,12 @@ export function Stopwatch() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Stoppen");
+        throw new Error(data.error || t("time.stopError"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Stoppuhr gestoppt und gespeichert");
+      toast.success(t("time.watchStopped"));
       queryClient.invalidateQueries({ queryKey: ["time-watch"] });
       queryClient.invalidateQueries({ queryKey: ["time-records"] });
       setShowStopForm(false);
@@ -173,7 +175,7 @@ export function Stopwatch() {
       <Card className="p-4">
         <div className="flex items-center justify-center gap-2 text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
-          <span className="text-sm">Lade Stoppuhr...</span>
+          <span className="text-sm">{t("time.loadingStopwatch")}</span>
         </div>
       </Card>
     );
@@ -193,7 +195,7 @@ export function Stopwatch() {
         </div>
         {running && (
           <p className="text-sm text-muted-foreground mt-1">
-            Laeuft seit {running.timeFrom} Uhr
+            {t("time.runningSinceAt", { time: running.timeFrom })}
           </p>
         )}
       </div>
@@ -212,7 +214,7 @@ export function Stopwatch() {
             ) : (
               <Play className="size-5" />
             )}
-            Start
+            {t("time.start")}
           </Button>
         </div>
       )}
@@ -225,7 +227,7 @@ export function Stopwatch() {
             size="lg"
           >
             <Square className="size-5" />
-            Stop
+            {t("time.stop")}
           </Button>
         </div>
       )}
@@ -233,19 +235,19 @@ export function Stopwatch() {
       {/* Stop form (category + comment before saving) */}
       {showStopForm && (
         <div className="space-y-3 border-t pt-3">
-          <p className="text-sm font-medium">Erfassung abschliessen</p>
+          <p className="text-sm font-medium">{t("time.finishEntry")}</p>
 
           {categories.length > 0 && (
             <div className="space-y-1.5">
-              <Label>Kategorie</Label>
+              <Label>{t("time.category")}</Label>
               <Select value={categoryId} onValueChange={setCategoryId}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Keine Kategorie" />
+                  <SelectValue placeholder={t("time.noCategory")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">
                     <span className="text-muted-foreground">
-                      Keine Kategorie
+                      {t("time.noCategory")}
                     </span>
                   </SelectItem>
                   {categories.map((cat) => (
@@ -259,11 +261,11 @@ export function Stopwatch() {
           )}
 
           <div className="space-y-1.5">
-            <Label>Kommentar (optional)</Label>
+            <Label>{t("time.commentOptional")}</Label>
             <Textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Notizen..."
+              placeholder={t("time.notesPlaceholder")}
               rows={2}
               maxLength={500}
             />
@@ -275,7 +277,7 @@ export function Stopwatch() {
               onClick={() => setShowStopForm(false)}
               className="flex-1"
             >
-              Abbrechen
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={() => stopMutation.mutate()}
@@ -286,7 +288,7 @@ export function Stopwatch() {
               {stopMutation.isPending && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Speichern &amp; Stop
+              {t("time.stopAndSave")}
             </Button>
           </div>
         </div>

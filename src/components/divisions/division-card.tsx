@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   ChevronDown,
@@ -48,6 +49,7 @@ type DivisionCardProps = {
 };
 
 export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
+  const t = useTranslations();
   const [expanded, setExpanded] = useState(false);
   const queryClient = useQueryClient();
 
@@ -59,7 +61,7 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
     queryKey: ["division-members", division.id],
     queryFn: async () => {
       const res = await fetch(`/api/divisions/${division.id}/members`);
-      if (!res.ok) throw new Error("Fehler beim Laden");
+      if (!res.ok) throw new Error(t("common.errorLoading"));
       return res.json();
     },
     enabled: expanded,
@@ -73,12 +75,12 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Loeschen");
+        throw new Error(data.error || t("divisions.errorDelete"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Arbeitsbereich wurde geloescht");
+      toast.success(t("divisions.toastDeleted"));
       queryClient.invalidateQueries({ queryKey: ["divisions"] });
     },
     onError: (error: Error) => {
@@ -96,12 +98,12 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Entfernen");
+        throw new Error(data.error || t("divisions.errorRemove"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Mitarbeiter wurde entfernt");
+      toast.success(t("divisions.toastMemberRemoved"));
       queryClient.invalidateQueries({
         queryKey: ["division-members", division.id],
       });
@@ -115,7 +117,7 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
   function handleDelete() {
     if (
       !window.confirm(
-        `Arbeitsbereich "${division.title}" wirklich loeschen?`
+        t("divisions.confirmDelete", { title: division.title })
       )
     ) {
       return;
@@ -140,7 +142,7 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
                   className="shrink-0 gap-1 text-xs"
                 >
                   <Lock className="size-3" />
-                  System
+                  {t("divisions.systemBadge")}
                 </Badge>
               )}
             </div>
@@ -178,7 +180,7 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
             <Users className="size-4" />
             <span>
               {division.memberCount}{" "}
-              {division.memberCount === 1 ? "Mitarbeiter" : "Mitarbeiter"}
+              {t("employees.employee")}
             </span>
           </div>
 
@@ -190,12 +192,12 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
           >
             {expanded ? (
               <>
-                Einklappen
+                {t("divisions.collapse")}
                 <ChevronUp className="size-3.5" />
               </>
             ) : (
               <>
-                Anzeigen
+                {t("divisions.expand")}
                 <ChevronDown className="size-3.5" />
               </>
             )}
@@ -220,7 +222,7 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
               membersData?.members &&
               membersData.members.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-2">
-                  Keine Mitarbeiter zugewiesen
+                  {t("divisions.noMembersAssigned")}
                 </p>
               )}
 

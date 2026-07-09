@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { getDateFnsLocale } from "@/i18n/date-fns-locale";
 import {
   MessageCircle,
   Plus,
@@ -39,6 +40,8 @@ interface TopicItem {
 
 export function TopicList() {
   const router = useRouter();
+  const t = useTranslations();
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -62,7 +65,7 @@ export function TopicList() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["topics"] });
-      toast.success("Thema erstellt");
+      toast.success(t("portal.topicCreated"));
       setTitle("");
       setCreateOpen(false);
       if (data.topic?.id) {
@@ -70,7 +73,7 @@ export function TopicList() {
       }
     },
     onError: () => {
-      toast.error("Fehler beim Erstellen");
+      toast.error(t("portal.createError"));
     },
   });
 
@@ -78,10 +81,10 @@ export function TopicList() {
     <div className="flex-1">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Themen</h1>
+        <h1 className="text-2xl font-bold">{t("portal.topics")}</h1>
         <Button onClick={() => setCreateOpen(true)} className="gap-2">
           <Plus className="size-4" />
-          Neues Thema
+          {t("portal.newTopic")}
         </Button>
       </div>
 
@@ -95,9 +98,9 @@ export function TopicList() {
       ) : topics.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-slate-500">
           <MessageCircle className="mb-3 size-10 text-slate-300" />
-          <p className="text-sm">Noch keine Themen vorhanden</p>
+          <p className="text-sm">{t("portal.noTopics")}</p>
           <Button variant="outline" className="mt-4" onClick={() => setCreateOpen(true)}>
-            Erstes Thema erstellen
+            {t("portal.createFirstTopic")}
           </Button>
         </div>
       ) : (
@@ -123,7 +126,7 @@ export function TopicList() {
                   )}
                   <span className="flex items-center gap-1">
                     <Clock className="size-3" />
-                    {format(new Date(topic.createdAt), "dd. MMM yyyy", { locale: de })}
+                    {format(new Date(topic.createdAt), "dd. MMM yyyy", { locale: getDateFnsLocale(locale) })}
                   </span>
                 </div>
               </div>
@@ -135,10 +138,10 @@ export function TopicList() {
                 </Badge>
                 <div className="text-right">
                   <div className="text-xs text-slate-400 dark:text-slate-500">
-                    Letzte Aktivitaet
+                    {t("portal.lastActivity")}
                   </div>
                   <div className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {format(new Date(topic.lastActivity), "dd. MMM yyyy, HH:mm", { locale: de })}
+                    {format(new Date(topic.lastActivity), "dd. MMM yyyy, HH:mm", { locale: getDateFnsLocale(locale) })}
                   </div>
                 </div>
               </div>
@@ -151,16 +154,16 @@ export function TopicList() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Neues Thema erstellen</DialogTitle>
+            <DialogTitle>{t("portal.createTopicTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Titel</Label>
+              <Label>{t("portal.titleLabel")}</Label>
               <Input
                 className="mt-1.5"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Thema eingeben..."
+                placeholder={t("portal.topicTitlePlaceholder")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && title.trim()) createMutation.mutate();
                 }}
@@ -168,13 +171,13 @@ export function TopicList() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreateOpen(false)}>
-                Abbrechen
+                {t("common.cancel")}
               </Button>
               <Button
                 onClick={() => createMutation.mutate()}
                 disabled={!title.trim() || createMutation.isPending}
               >
-                {createMutation.isPending ? "Erstelle..." : "Erstellen"}
+                {createMutation.isPending ? t("portal.creating") : t("common.create")}
               </Button>
             </div>
           </div>

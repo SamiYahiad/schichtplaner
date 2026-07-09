@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2, Clock, Timer } from "lucide-react";
 import { format } from "date-fns";
@@ -68,6 +69,7 @@ export function TimeRecordForm({
   employees = [],
   defaultDate,
 }: TimeRecordFormProps) {
+  const t = useTranslations();
   const isEdit = !!record;
   const queryClient = useQueryClient();
   const { data: currentMember } = useCurrentMember();
@@ -167,12 +169,12 @@ export function TimeRecordForm({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Erstellen");
+        throw new Error(data.error || t("time.createError"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Zeiterfassung gespeichert");
+      toast.success(t("time.saved"));
       queryClient.invalidateQueries({ queryKey: ["time-records"] });
       onOpenChange(false);
     },
@@ -207,12 +209,12 @@ export function TimeRecordForm({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Speichern");
+        throw new Error(data.error || t("time.saveError"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Zeiterfassung aktualisiert");
+      toast.success(t("time.updated"));
       queryClient.invalidateQueries({ queryKey: ["time-records"] });
       onOpenChange(false);
     },
@@ -226,7 +228,7 @@ export function TimeRecordForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (entryType === "MANUAL" && timeFrom >= timeTo) {
-      toast.error("Startzeit muss vor Endzeit liegen");
+      toast.error(t("time.startBeforeEnd"));
       return;
     }
     if (
@@ -234,7 +236,7 @@ export function TimeRecordForm({
       durationHours === 0 &&
       durationMinutes === 0
     ) {
-      toast.error("Bitte eine Dauer eingeben");
+      toast.error(t("time.enterDuration"));
       return;
     }
     if (isEdit) {
@@ -250,12 +252,12 @@ export function TimeRecordForm({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
-              {isEdit ? "Erfassung bearbeiten" : "Zeit erfassen"}
+              {isEdit ? t("time.editRecord") : t("time.createRecord")}
             </DialogTitle>
             <DialogDescription>
               {isEdit
-                ? "Bearbeite die Zeiterfassung."
-                : "Erfasse Arbeitszeit manuell."}
+                ? t("time.editRecordDescription")
+                : t("time.createRecordDescription")}
             </DialogDescription>
           </DialogHeader>
 
@@ -263,10 +265,10 @@ export function TimeRecordForm({
             {/* Employee select (only for managers in create mode) */}
             {!isEdit && isManager && employees.length > 0 && (
               <div className="space-y-1.5">
-                <Label>Mitarbeiter</Label>
+                <Label>{t("time.employee")}</Label>
                 <Select value={userId} onValueChange={setUserId}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Mitarbeiter waehlen" />
+                    <SelectValue placeholder={t("time.selectEmployee")} />
                   </SelectTrigger>
                   <SelectContent>
                     {employees.map((emp) => (
@@ -281,7 +283,7 @@ export function TimeRecordForm({
 
             {/* Date picker */}
             <div className="space-y-1.5">
-              <Label htmlFor="record-date">Datum</Label>
+              <Label htmlFor="record-date">{t("time.date")}</Label>
               <Input
                 id="record-date"
                 type="date"
@@ -293,7 +295,7 @@ export function TimeRecordForm({
 
             {/* Type toggle */}
             <div className="space-y-1.5">
-              <Label>Erfassungsart</Label>
+              <Label>{t("time.entryType")}</Label>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -306,7 +308,7 @@ export function TimeRecordForm({
                   )}
                 >
                   <Clock className="size-4" />
-                  Von / Bis
+                  {t("time.fromTo")}
                 </button>
                 <button
                   type="button"
@@ -319,7 +321,7 @@ export function TimeRecordForm({
                   )}
                 >
                   <Timer className="size-4" />
-                  Dauer
+                  {t("time.duration")}
                 </button>
               </div>
             </div>
@@ -328,7 +330,7 @@ export function TimeRecordForm({
             {entryType === "MANUAL" ? (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="time-from">Von</Label>
+                  <Label htmlFor="time-from">{t("time.from")}</Label>
                   <Input
                     id="time-from"
                     type="time"
@@ -338,7 +340,7 @@ export function TimeRecordForm({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="time-to">Bis</Label>
+                  <Label htmlFor="time-to">{t("time.to")}</Label>
                   <Input
                     id="time-to"
                     type="time"
@@ -351,7 +353,7 @@ export function TimeRecordForm({
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="duration-hours">Stunden</Label>
+                  <Label htmlFor="duration-hours">{t("time.hours")}</Label>
                   <Input
                     id="duration-hours"
                     type="number"
@@ -364,7 +366,7 @@ export function TimeRecordForm({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="duration-minutes">Minuten</Label>
+                  <Label htmlFor="duration-minutes">{t("time.minutes")}</Label>
                   <Input
                     id="duration-minutes"
                     type="number"
@@ -382,15 +384,15 @@ export function TimeRecordForm({
             {/* Category select */}
             {categories.length > 0 && (
               <div className="space-y-1.5">
-                <Label>Kategorie</Label>
+                <Label>{t("time.category")}</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Keine Kategorie" />
+                    <SelectValue placeholder={t("time.noCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">
                       <span className="text-muted-foreground">
-                        Keine Kategorie
+                        {t("time.noCategory")}
                       </span>
                     </SelectItem>
                     {categories.map((cat) => (
@@ -405,12 +407,12 @@ export function TimeRecordForm({
 
             {/* Comment */}
             <div className="space-y-1.5">
-              <Label htmlFor="record-comment">Kommentar (optional)</Label>
+              <Label htmlFor="record-comment">{t("time.commentOptional")}</Label>
               <Textarea
                 id="record-comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Notizen zur Zeiterfassung..."
+                placeholder={t("time.commentPlaceholder")}
                 rows={2}
                 maxLength={500}
               />
@@ -425,11 +427,11 @@ export function TimeRecordForm({
                 onClick={() => onOpenChange(false)}
                 disabled={isPending}
               >
-                Abbrechen
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="size-4 animate-spin" />}
-                {isEdit ? "Speichern" : "Erfassen"}
+                {isEdit ? t("common.save") : t("time.record")}
               </Button>
             </div>
           </DialogFooter>

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ChevronLeft,
   ChevronRight,
@@ -63,35 +64,20 @@ type ReportingResponse = {
 
 // ---------- Helpers ----------
 
-const MONTH_NAMES = [
-  "JANUAR",
-  "FEBRUAR",
-  "MAERZ",
-  "APRIL",
-  "MAI",
-  "JUNI",
-  "JULI",
-  "AUGUST",
-  "SEPTEMBER",
-  "OKTOBER",
-  "NOVEMBER",
-  "DEZEMBER",
-];
-
-const MONTH_NAMES_DISPLAY = [
-  "Januar",
-  "Februar",
-  "Maerz",
-  "April",
-  "Mai",
-  "Juni",
-  "Juli",
-  "August",
-  "September",
-  "Oktober",
-  "November",
-  "Dezember",
-];
+const MONTH_KEYS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+] as const;
 
 function formatMinutes(totalMinutes: number): string {
   const h = Math.floor(totalMinutes / 60);
@@ -117,7 +103,12 @@ interface HoursTableProps {
 }
 
 export function HoursTable({ month, year }: HoursTableProps) {
+  const t = useTranslations();
   const router = useRouter();
+  const MONTH_NAMES_DISPLAY = MONTH_KEYS.map((key) =>
+    t(`reporting.months.${key}`)
+  );
+  const MONTH_NAMES = MONTH_NAMES_DISPLAY.map((name) => name.toUpperCase());
 
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
@@ -129,7 +120,7 @@ export function HoursTable({ month, year }: HoursTableProps) {
     queryKey: ["reporting", month, year],
     queryFn: async () => {
       const res = await fetch(`/api/reporting?month=${month}&year=${year}`);
-      if (!res.ok) throw new Error("Fehler beim Laden der Auswertung");
+      if (!res.ok) throw new Error(t("reporting.loadError"));
       return res.json();
     },
   });
@@ -223,14 +214,14 @@ export function HoursTable({ month, year }: HoursTableProps) {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Auswertung</h1>
+          <h1 className="text-2xl font-bold">{t("reporting.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Monatliche Stundenauswertung und Export
+            {t("reporting.subtitle")}
           </p>
         </div>
         <Button size="sm" onClick={() => setShowExport(true)}>
           <Download className="size-4" />
-          Export
+          {t("reporting.export")}
         </Button>
       </div>
 
@@ -262,7 +253,7 @@ export function HoursTable({ month, year }: HoursTableProps) {
                 {formatMinutes(totals.totalMinutes)}
               </span>
               <span className="text-sm text-muted-foreground">
-                ({totals.totalShifts} Schichten)
+                ({totals.totalShifts} {t("ai.shifts")})
               </span>
             </div>
 
@@ -292,7 +283,7 @@ export function HoursTable({ month, year }: HoursTableProps) {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Mitarbeiter suchen..."
+          placeholder={t("time.searchEmployees")}
           className="pl-9"
         />
       </div>
@@ -303,7 +294,7 @@ export function HoursTable({ month, year }: HoursTableProps) {
       {/* Error */}
       {error && (
         <Card className="p-6 text-center text-destructive">
-          Fehler beim Laden der Auswertung. Bitte versuche es erneut.
+          {t("reporting.loadErrorRetry")}
         </Card>
       )}
 
@@ -311,9 +302,9 @@ export function HoursTable({ month, year }: HoursTableProps) {
       {!isLoading && !error && employees.length === 0 && (
         <Card className="flex flex-col items-center justify-center p-12 text-center">
           <BarChart3 className="size-12 text-muted-foreground/50 mb-3" />
-          <p className="text-lg font-medium">Keine Daten</p>
+          <p className="text-lg font-medium">{t("reporting.noData")}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Fuer diesen Monat sind noch keine Zeiterfassungen vorhanden.
+            {t("reporting.noDataDescription")}
           </p>
         </Card>
       )}
@@ -331,7 +322,7 @@ export function HoursTable({ month, year }: HoursTableProps) {
                       onClick={() => toggleSort("name")}
                       className="flex items-center gap-1 font-semibold hover:text-foreground transition-colors"
                     >
-                      NAME
+                      {t("reporting.name")}
                       <ArrowUpDown
                         className={cn(
                           "size-3",
@@ -356,7 +347,7 @@ export function HoursTable({ month, year }: HoursTableProps) {
                       onClick={() => toggleSort("total")}
                       className="flex items-center gap-1 font-semibold hover:text-foreground transition-colors ml-auto"
                     >
-                      GESAMT
+                      {t("reporting.total")}
                       <ArrowUpDown
                         className={cn(
                           "size-3",
@@ -402,7 +393,7 @@ export function HoursTable({ month, year }: HoursTableProps) {
 
                 {/* Totals row */}
                 <TableRow className="bg-muted/50 font-semibold">
-                  <TableCell>Gesamt</TableCell>
+                  <TableCell>{t("reporting.totalLabel")}</TableCell>
                   {kwHeaders.map((kw) => {
                     const kwData = kwTotals.get(kw.weekNumber);
                     const minutes = kwData?.minutes ?? 0;
@@ -431,7 +422,7 @@ export function HoursTable({ month, year }: HoursTableProps) {
         employees.length > 0 &&
         filteredEmployees.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-8">
-            Keine Mitarbeiter gefunden fuer &quot;{search}&quot;
+            {t("reporting.noEmployeesFound", { search })}
           </p>
         )}
 

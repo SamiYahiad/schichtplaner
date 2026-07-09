@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Calendar,
   Clock,
@@ -10,40 +11,40 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const sections = [
+const SECTION_DEFS = [
   {
     key: "schedule",
-    label: "Schichtplan",
+    labelKey: "settings.schedule",
     icon: Calendar,
   },
   {
     key: "time",
-    label: "Zeiterfassung",
+    labelKey: "settings.timeTracking",
     icon: Clock,
   },
   {
     key: "wishplan",
-    label: "Wunschplaene",
+    labelKey: "settings.wishPlans",
     icon: FileHeart,
   },
   {
     key: "employees",
-    label: "Mitarbeiter",
+    labelKey: "settings.employees",
     icon: Users,
   },
   {
     key: "absences",
-    label: "Abwesenheiten",
+    labelKey: "settings.absences",
     icon: Umbrella,
   },
   {
     key: "account",
-    label: "Account",
+    labelKey: "settings.account",
     icon: Building2,
   },
 ] as const;
 
-export type SettingsSection = (typeof sections)[number]["key"];
+export type SettingsSection = (typeof SECTION_DEFS)[number]["key"];
 
 interface SettingsSidebarProps {
   activeSection: SettingsSection;
@@ -54,14 +55,15 @@ export function SettingsSidebar({
   activeSection,
   onSectionChange,
 }: SettingsSidebarProps) {
+  const t = useTranslations();
   return (
     <aside className="w-56 shrink-0">
       <nav>
         <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Einstellungen
+          {t("settings.title")}
         </h3>
         <ul className="space-y-0.5">
-          {sections.map((section) => {
+          {SECTION_DEFS.map((section) => {
             const Icon = section.icon;
             const active = activeSection === section.key;
             return (
@@ -77,7 +79,7 @@ export function SettingsSidebar({
                   )}
                 >
                   <Icon className="size-4" />
-                  <span>{section.label}</span>
+                  <span>{t(section.labelKey)}</span>
                 </button>
               </li>
             );

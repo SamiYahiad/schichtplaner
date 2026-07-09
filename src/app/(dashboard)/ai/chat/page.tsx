@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Sparkles, Send, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface ChatApiResponse {
 // ─── Page ───────────────────────────────────────────────────────────
 
 export default function AiChatPage() {
+  const t = useTranslations();
   const [messages, setMessages] = useState<ChatMessageData[]>([]);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -53,7 +55,7 @@ export default function AiChatPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Senden");
+        throw new Error(data.error || t("ai.sendError"));
       }
       return res.json();
     },
@@ -80,7 +82,7 @@ export default function AiChatPage() {
           {
             id: genId(),
             role: "assistant" as const,
-            content: `Fehler: ${error.message}`,
+            content: t("ai.errorPrefix", { message: error.message }),
             timestamp: new Date(),
           },
         ];
@@ -132,10 +134,10 @@ export default function AiChatPage() {
 
   // Quick action suggestions
   const suggestions = [
-    "Zeig mir den Schichtplan fuer diese Woche",
-    "Welche Mitarbeiter sind naechste Woche abwesend?",
-    "Wer hat die meisten Stunden diesen Monat?",
-    "Suche Mitarbeiter mit dem Namen...",
+    t("ai.suggestion1"),
+    t("ai.suggestion2"),
+    t("ai.suggestion3"),
+    t("ai.suggestion4"),
   ];
 
   const handleSuggestion = (text: string) => {
@@ -152,9 +154,9 @@ export default function AiChatPage() {
             <Sparkles className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">KI-Assistent</h1>
+            <h1 className="text-xl font-bold">{t("ai.title")}</h1>
             <p className="text-sm text-muted-foreground">
-              Frag mich alles rund um deinen Schichtplan
+              {t("ai.chatSubtitle")}
             </p>
           </div>
         </div>
@@ -162,7 +164,7 @@ export default function AiChatPage() {
         <div className="flex items-center gap-2">
           <Link href="/ai/insights">
             <Button variant="outline" size="sm">
-              Insights & Prognosen
+              {t("ai.insightsAndForecasts")}
             </Button>
           </Link>
           {messages.length > 0 && (
@@ -173,7 +175,7 @@ export default function AiChatPage() {
               className="gap-1.5"
             >
               <Trash2 className="size-3.5" />
-              Chat leeren
+              {t("ai.clearChat")}
             </Button>
           )}
         </div>
@@ -187,12 +189,10 @@ export default function AiChatPage() {
             <div className="flex-1 flex flex-col items-center justify-center p-8">
               <Sparkles className="size-12 text-indigo-200 dark:text-indigo-800 mb-4" />
               <h2 className="text-lg font-semibold mb-2">
-                Wie kann ich dir helfen?
+                {t("ai.howCanIHelp")}
               </h2>
               <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                Ich kann Schichtplaene anzeigen, Mitarbeiter suchen, Stunden
-                berechnen, Abwesenheiten pruefen und sogar Schichten erstellen
-                oder Mitarbeiter einbuchen.
+                {t("ai.capabilitiesDescription")}
               </p>
 
               {/* Suggestions */}
@@ -221,7 +221,7 @@ export default function AiChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Nachricht eingeben... (Enter zum Senden, Shift+Enter fuer Zeilenumbruch)"
+              placeholder={t("ai.chatPlaceholder")}
               className={cn(
                 "flex-1 resize-none rounded-xl border bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm",
                 "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500",

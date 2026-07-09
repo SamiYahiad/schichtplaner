@@ -2,10 +2,11 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { isToday } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { dayNames, formatDateShort } from "@/lib/utils/calendar";
+import { formatDateShort } from "@/lib/utils/calendar";
 import { cn } from "@/lib/utils";
 import type { ScheduleData, ShiftData } from "@/types/schedule";
 
@@ -21,11 +22,16 @@ interface ClassicGridProps {
  * Each cell shows booked employees for that shift on that day.
  */
 export function ClassicGrid({ weekNumber, year, weekDates }: ClassicGridProps) {
+  const t = useTranslations();
+  const dayNames = [
+    t("schedule.mon"), t("schedule.tue"), t("schedule.wed"), t("schedule.thu"),
+    t("schedule.fri"), t("schedule.sat"), t("schedule.sun"),
+  ];
   const { data, isLoading } = useQuery<{ schedule: ScheduleData }>({
     queryKey: ["schedule", weekNumber, year],
     queryFn: async () => {
       const res = await fetch(`/api/schedules?kw=${weekNumber}&year=${year}`);
-      if (!res.ok) throw new Error("Fehler beim Laden der Schichten");
+      if (!res.ok) throw new Error(t("schedule.errorLoadingShifts"));
       return res.json();
     },
   });
@@ -82,7 +88,7 @@ export function ClassicGrid({ weekNumber, year, weekDates }: ClassicGridProps) {
   if (timeSlots.length === 0) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
-        Keine Schichten in dieser Woche
+        {t("schedule.noShiftsThisWeek")}
       </div>
     );
   }
@@ -93,7 +99,7 @@ export function ClassicGrid({ weekNumber, year, weekDates }: ClassicGridProps) {
         <thead>
           <tr className="bg-muted/30">
             <th className="border-r px-3 py-2 text-left text-xs font-semibold text-muted-foreground w-32">
-              Schicht
+              {t("schedule.shift")}
             </th>
             {weekDates.map((date, idx) => {
               const today = isToday(date);

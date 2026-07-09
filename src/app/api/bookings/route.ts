@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
@@ -16,22 +17,23 @@ const bookingSchema = z.object({
  * Manager+ can book anyone, employees can only book themselves.
  */
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = bookingSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
   // Employees can only book themselves
   if (!isManagerOrAbove(member.role) && userId !== member.user.id) {
     return NextResponse.json(
-      { error: "Mitarbeiter koennen nur sich selbst buchen" },
+      { error: t("errors.employeesCanOnlyBookSelf") },
       { status: 403 }
     );
   }
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
 
   if (!shift || shift.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Schicht nicht gefunden" },
+      { error: t("errors.shiftNotFound") },
       { status: 404 }
     );
   }
@@ -73,7 +75,7 @@ export async function POST(request: NextRequest) {
 
   if (!targetMember) {
     return NextResponse.json(
-      { error: "Mitarbeiter nicht gefunden" },
+      { error: t("errors.employeeNotFound") },
       { status: 404 }
     );
   }
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest) {
   // Check shift isn't full
   if (shift.bookings.length >= shift.maxEmployees) {
     return NextResponse.json(
-      { error: "Schicht ist voll" },
+      { error: t("errors.shiftFull") },
       { status: 409 }
     );
   }
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
   const existingBooking = shift.bookings.find((b) => b.userId === userId);
   if (existingBooking) {
     return NextResponse.json(
-      { error: "Mitarbeiter ist bereits in dieser Schicht gebucht" },
+      { error: t("errors.employeeAlreadyBookedInShift") },
       { status: 409 }
     );
   }
@@ -139,22 +141,23 @@ export async function POST(request: NextRequest) {
  * Manager+ can unbook anyone, employees can only unbook themselves.
  */
 export async function DELETE(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = bookingSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -164,7 +167,7 @@ export async function DELETE(request: NextRequest) {
   // Employees can only unbook themselves
   if (!isManagerOrAbove(member.role) && userId !== member.user.id) {
     return NextResponse.json(
-      { error: "Mitarbeiter koennen nur sich selbst abbuchen" },
+      { error: t("errors.employeesCanOnlyUnbookSelf") },
       { status: 403 }
     );
   }
@@ -179,7 +182,7 @@ export async function DELETE(request: NextRequest) {
 
   if (!shift || shift.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Schicht nicht gefunden" },
+      { error: t("errors.shiftNotFound") },
       { status: 404 }
     );
   }
@@ -191,7 +194,7 @@ export async function DELETE(request: NextRequest) {
 
   if (!booking) {
     return NextResponse.json(
-      { error: "Buchung nicht gefunden" },
+      { error: t("errors.bookingNotFound") },
       { status: 404 }
     );
   }

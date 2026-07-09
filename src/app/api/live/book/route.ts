@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember } from "@/lib/auth-helpers";
@@ -20,22 +21,23 @@ const bookSchema = z.object({
  * Creates a booking and a LiveLog entry.
  */
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = bookSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   if (!shift || shift.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Schicht nicht gefunden" },
+      { error: t("errors.shiftNotFound") },
       { status: 404 }
     );
   }
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
 
   if (!liveSession || !liveSession.isActive) {
     return NextResponse.json(
-      { error: "Live-Modus ist nicht aktiv" },
+      { error: t("errors.liveModeNotActive") },
       { status: 400 }
     );
   }
@@ -87,7 +89,7 @@ export async function POST(request: NextRequest) {
   );
   if (!liveDay || !liveDay.enabled) {
     return NextResponse.json(
-      { error: "Dieser Tag ist im Live-Modus deaktiviert" },
+      { error: t("errors.liveDayDisabled") },
       { status: 400 }
     );
   }
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
   // Check shift isn't full
   if (shift.bookings.length >= shift.maxEmployees) {
     return NextResponse.json(
-      { error: "Schicht ist voll" },
+      { error: t("errors.shiftFull") },
       { status: 409 }
     );
   }
@@ -104,7 +106,7 @@ export async function POST(request: NextRequest) {
   const alreadyBooked = shift.bookings.some((b) => b.userId === userId);
   if (alreadyBooked) {
     return NextResponse.json(
-      { error: "Du bist bereits in dieser Schicht eingetragen" },
+      { error: t("errors.alreadyBookedSelf") },
       { status: 409 }
     );
   }
@@ -163,22 +165,23 @@ export async function POST(request: NextRequest) {
  * DELETE /api/live/book — Employee self-unbooking in live mode
  */
 export async function DELETE(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = bookSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -201,7 +204,7 @@ export async function DELETE(request: NextRequest) {
 
   if (!shift || shift.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Schicht nicht gefunden" },
+      { error: t("errors.shiftNotFound") },
       { status: 404 }
     );
   }
@@ -215,7 +218,7 @@ export async function DELETE(request: NextRequest) {
 
   if (!liveSession || !liveSession.isActive) {
     return NextResponse.json(
-      { error: "Live-Modus ist nicht aktiv" },
+      { error: t("errors.liveModeNotActive") },
       { status: 400 }
     );
   }
@@ -227,7 +230,7 @@ export async function DELETE(request: NextRequest) {
 
   if (!booking) {
     return NextResponse.json(
-      { error: "Buchung nicht gefunden" },
+      { error: t("errors.bookingNotFound") },
       { status: 404 }
     );
   }

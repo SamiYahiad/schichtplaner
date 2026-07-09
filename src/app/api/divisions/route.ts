@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isAdminOrAbove } from "@/lib/auth-helpers";
 
 // GET /api/divisions - List all divisions for the current org
 export async function GET() {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const divisions = await db.division.findMany({
@@ -40,33 +42,37 @@ export async function GET() {
 }
 
 // POST /api/divisions - Create a new division
-const createDivisionSchema = z.object({
-  title: z.string().min(1, "Titel ist erforderlich").max(100, "Titel darf maximal 100 Zeichen haben"),
-  description: z.string().max(500).optional().nullable(),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Ungueltige Farbe"),
-});
+function buildCreateDivisionSchema(t: (key: string) => string) {
+  return z.object({
+    title: z.string().min(1, t("errors.titleRequired")).max(100, t("errors.titleTooLong")),
+    description: z.string().max(500).optional().nullable(),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/, t("errors.invalidColor")),
+  });
+}
 
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isAdminOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
+  const createDivisionSchema = buildCreateDivisionSchema(t);
   const parsed = createDivisionSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }

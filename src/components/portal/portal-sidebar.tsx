@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   Inbox,
   Send,
@@ -14,18 +15,19 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 const messageLinks = [
-  { key: "inbox", label: "Posteingang", href: "/portal/inbox", icon: Inbox },
-  { key: "sent", label: "Gesendete", href: "/portal/sent", icon: Send },
-  { key: "trash", label: "Papierkorb", href: "/portal/trash", icon: Trash2 },
+  { key: "inbox", labelKey: "portal.inbox", href: "/portal/inbox", icon: Inbox },
+  { key: "sent", labelKey: "portal.sent", href: "/portal/sent", icon: Send },
+  { key: "trash", labelKey: "portal.trash", href: "/portal/trash", icon: Trash2 },
 ];
 
 const portalLinks = [
-  { key: "files", label: "Dateien", href: "/portal/files", icon: FolderOpen },
-  { key: "topics", label: "Themen", href: "/portal/topics", icon: MessageCircle },
+  { key: "files", labelKey: "portal.files", href: "/portal/files", icon: FolderOpen },
+  { key: "topics", labelKey: "portal.topics", href: "/portal/topics", icon: MessageCircle },
 ];
 
 export function PortalSidebar() {
   const pathname = usePathname();
+  const t = useTranslations();
 
   const { data } = useQuery<{ count: number }>({
     queryKey: ["messages", "unread-count"],
@@ -41,7 +43,7 @@ export function PortalSidebar() {
         {/* Messages section */}
         <div>
           <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Nachrichten
+            {t("portal.messages")}
           </h3>
           <ul className="space-y-0.5">
             {messageLinks.map((link) => {
@@ -59,7 +61,7 @@ export function PortalSidebar() {
                     )}
                   >
                     <Icon className="size-4" />
-                    <span className="flex-1">{link.label}</span>
+                    <span className="flex-1">{t(link.labelKey)}</span>
                     {link.key === "inbox" && unreadCount > 0 && (
                       <Badge variant="default" className="ml-auto h-5 min-w-5 justify-center rounded-full px-1.5 text-xs">
                         {unreadCount}
@@ -75,7 +77,7 @@ export function PortalSidebar() {
         {/* Portal section */}
         <div>
           <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Portal
+            {t("nav.portal")}
           </h3>
           <ul className="space-y-0.5">
             {portalLinks.map((link) => {
@@ -93,7 +95,7 @@ export function PortalSidebar() {
                     )}
                   >
                     <Icon className="size-4" />
-                    <span>{link.label}</span>
+                    <span>{t(link.labelKey)}</span>
                   </Link>
                 </li>
               );

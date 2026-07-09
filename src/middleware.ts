@@ -19,4 +19,5 @@ export default auth((req) => {
 
 export const config = {
   matcher: ["/((?!_next|favicon.ico|.*\\..*).*)"],
+  runtime: "nodejs",
 };

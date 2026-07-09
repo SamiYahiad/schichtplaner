@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Sparkles, X, Send, Maximize2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface ChatApiResponse {
 // ─── Chat Widget ────────────────────────────────────────────────────
 
 export function ChatWidget() {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessageData[]>([]);
   const [input, setInput] = useState("");
@@ -56,7 +58,7 @@ export function ChatWidget() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Senden");
+        throw new Error(data.error || t("ai.sendError"));
       }
       return res.json();
     },
@@ -85,7 +87,7 @@ export function ChatWidget() {
           {
             id: genId(),
             role: "assistant" as const,
-            content: `Fehler: ${error.message}`,
+            content: t("ai.errorPrefix", { message: error.message }),
             timestamp: new Date(),
           },
         ];
@@ -141,7 +143,7 @@ export function ChatWidget() {
         <button
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 z-50 flex size-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
-          aria-label="KI-Chat oeffnen"
+          aria-label={t("ai.openChat")}
         >
           <Sparkles className="size-6" />
         </button>
@@ -154,13 +156,13 @@ export function ChatWidget() {
           <div className="flex items-center justify-between px-4 py-3 bg-indigo-600 text-white">
             <div className="flex items-center gap-2">
               <Sparkles className="size-5" />
-              <span className="font-semibold text-sm">KI-Assistent</span>
+              <span className="font-semibold text-sm">{t("ai.title")}</span>
             </div>
             <div className="flex items-center gap-1">
               <Link
                 href="/ai/chat"
                 className="rounded-md p-1 hover:bg-indigo-500 transition-colors"
-                title="Vollbild oeffnen"
+                title={t("ai.openFullscreen")}
               >
                 <Maximize2 className="size-4" />
               </Link>
@@ -184,7 +186,7 @@ export function ChatWidget() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Nachricht eingeben..."
+                placeholder={t("ai.messagePlaceholder")}
                 className={cn(
                   "flex-1 resize-none rounded-lg border bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm",
                   "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500",

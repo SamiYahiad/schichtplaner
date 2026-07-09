@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { getDateFnsLocale } from "@/i18n/date-fns-locale";
 import {
   Folder,
   FileText,
@@ -59,6 +60,8 @@ interface BreadcrumbItem {
 }
 
 export function FileBrowser() {
+  const t = useTranslations();
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -99,12 +102,12 @@ export function FileBrowser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["files"] });
-      toast.success("Ordner erstellt");
+      toast.success(t("portal.folderCreated"));
       setFolderName("");
       setCreateFolderOpen(false);
     },
     onError: (error: Error) => {
-      toast.error(error.message === "Forbidden" ? "Keine Berechtigung" : "Fehler beim Erstellen");
+      toast.error(error.message === "Forbidden" ? t("portal.noPermission") : t("portal.createError"));
     },
   });
 
@@ -121,7 +124,7 @@ export function FileBrowser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["files"] });
-      toast.success("Umbenannt");
+      toast.success(t("portal.renamed"));
       setRenameTarget(null);
       setRenameName("");
     },
@@ -134,10 +137,10 @@ export function FileBrowser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["files"] });
-      toast.success("Geloescht");
+      toast.success(t("portal.deleted"));
     },
     onError: () => {
-      toast.error("Fehler beim Loeschen");
+      toast.error(t("portal.deleteError"));
     },
   });
 
@@ -151,20 +154,20 @@ export function FileBrowser() {
     <div className="flex-1">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dateien</h1>
+        <h1 className="text-2xl font-bold">{t("portal.files")}</h1>
         <div className="flex gap-2">
           <Button
             variant="outline"
             className="gap-2"
             disabled
-            title="Datei-Upload kommt bald"
+            title={t("portal.uploadComingSoon")}
           >
             <Upload className="size-4" />
-            Datei hochladen
+            {t("portal.uploadFile")}
           </Button>
           <Button onClick={() => setCreateFolderOpen(true)} className="gap-2">
             <Plus className="size-4" />
-            Neuer Ordner
+            {t("portal.newFolder")}
           </Button>
         </div>
       </div>
@@ -181,7 +184,7 @@ export function FileBrowser() {
           )}
         >
           <Home className="size-3.5" />
-          Stammordner
+          {t("portal.rootFolder")}
         </button>
         {breadcrumb.map((item) => (
           <span key={item.id} className="flex items-center gap-1">
@@ -211,7 +214,7 @@ export function FileBrowser() {
       ) : folders.length === 0 && files.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-slate-500">
           <Folder className="mb-3 size-10 text-slate-300" />
-          <p className="text-sm">Dieser Ordner ist leer</p>
+          <p className="text-sm">{t("portal.folderEmpty")}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -219,7 +222,7 @@ export function FileBrowser() {
           {folders.length > 0 && (
             <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Ordner
+                {t("portal.folders")}
               </h3>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {folders.map((folder) => (
@@ -255,7 +258,7 @@ export function FileBrowser() {
                             }}
                           >
                             <Pencil className="mr-2 size-4" />
-                            Umbenennen
+                            {t("portal.rename")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
@@ -265,7 +268,7 @@ export function FileBrowser() {
                             }}
                           >
                             <Trash2 className="mr-2 size-4" />
-                            Loeschen
+                            {t("common.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -280,7 +283,7 @@ export function FileBrowser() {
           {files.length > 0 && (
             <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Dateien
+                {t("portal.files")}
               </h3>
               <div className="divide-y rounded-lg border bg-white dark:bg-slate-900 dark:border-slate-800">
                 {files.map((file) => (
@@ -294,7 +297,7 @@ export function FileBrowser() {
                       <div className="text-xs text-slate-500">
                         {formatSize(file.size)} &middot;{" "}
                         {file.uploadedBy.firstName} {file.uploadedBy.lastName} &middot;{" "}
-                        {format(new Date(file.createdAt), "dd. MMM yyyy", { locale: de })}
+                        {format(new Date(file.createdAt), "dd. MMM yyyy", { locale: getDateFnsLocale(locale) })}
                       </div>
                     </div>
 
@@ -313,14 +316,14 @@ export function FileBrowser() {
                             }}
                           >
                             <Pencil className="mr-2 size-4" />
-                            Umbenennen
+                            {t("portal.rename")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => deleteMutation.mutate(file.id)}
                           >
                             <Trash2 className="mr-2 size-4" />
-                            Loeschen
+                            {t("common.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -337,16 +340,16 @@ export function FileBrowser() {
       <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Neuer Ordner</DialogTitle>
+            <DialogTitle>{t("portal.newFolder")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Ordnername</Label>
+              <Label>{t("portal.folderName")}</Label>
               <Input
                 className="mt-1.5"
                 value={folderName}
                 onChange={(e) => setFolderName(e.target.value)}
-                placeholder="Name eingeben..."
+                placeholder={t("portal.namePlaceholder")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && folderName.trim()) createFolderMutation.mutate();
                 }}
@@ -354,13 +357,13 @@ export function FileBrowser() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreateFolderOpen(false)}>
-                Abbrechen
+                {t("common.cancel")}
               </Button>
               <Button
                 onClick={() => createFolderMutation.mutate()}
                 disabled={!folderName.trim() || createFolderMutation.isPending}
               >
-                {createFolderMutation.isPending ? "Erstelle..." : "Erstellen"}
+                {createFolderMutation.isPending ? t("portal.creating") : t("common.create")}
               </Button>
             </div>
           </div>
@@ -372,12 +375,12 @@ export function FileBrowser() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {renameTarget?.type === "folder" ? "Ordner" : "Datei"} umbenennen
+              {t("portal.renameDialogTitle", { type: renameTarget?.type === "folder" ? "folder" : "file" })}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Neuer Name</Label>
+              <Label>{t("portal.newName")}</Label>
               <Input
                 className="mt-1.5"
                 value={renameName}
@@ -389,13 +392,13 @@ export function FileBrowser() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setRenameTarget(null)}>
-                Abbrechen
+                {t("common.cancel")}
               </Button>
               <Button
                 onClick={() => renameMutation.mutate()}
                 disabled={!renameName.trim() || renameMutation.isPending}
               >
-                {renameMutation.isPending ? "Speichere..." : "Speichern"}
+                {renameMutation.isPending ? t("portal.saving") : t("common.save")}
               </Button>
             </div>
           </div>

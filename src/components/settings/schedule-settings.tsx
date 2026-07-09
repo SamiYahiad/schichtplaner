@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -24,21 +25,22 @@ export function ScheduleSettings({
   onUpdate,
   isSaving,
 }: ScheduleSettingsProps) {
+  const t = useTranslations();
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Schichtplan</h2>
+        <h2 className="text-xl font-semibold">{t("settings.schedule")}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Einstellungen fuer den Schichtplan
+          {t("settings.scheduleDescription")}
         </p>
       </div>
 
       <Card className="p-6 space-y-6">
         {/* Name format */}
         <div className="space-y-2">
-          <Label>Namensformat</Label>
+          <Label>{t("settings.nameFormat")}</Label>
           <p className="text-xs text-muted-foreground">
-            Wie sollen Mitarbeiternamen im Schichtplan angezeigt werden?
+            {t("settings.nameFormatDescription")}
           </p>
           <Select
             value={nameFormat}
@@ -50,14 +52,14 @@ export function ScheduleSettings({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="LASTNAME_FIRSTNAME">
-                Nachname, Vorname
+                {t("settings.lastNameFirstName")}
               </SelectItem>
               <SelectItem value="FIRSTNAME_LASTNAME">
-                Vorname Nachname
+                {t("settings.firstNameLastName")}
               </SelectItem>
-              <SelectItem value="LASTNAME">Nur Nachname</SelectItem>
-              <SelectItem value="FIRSTNAME">Nur Vorname</SelectItem>
-              <SelectItem value="NICKNAME">Spitzname</SelectItem>
+              <SelectItem value="LASTNAME">{t("settings.lastNameOnly")}</SelectItem>
+              <SelectItem value="FIRSTNAME">{t("settings.firstNameOnly")}</SelectItem>
+              <SelectItem value="NICKNAME">{t("settings.nickname")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -66,9 +68,9 @@ export function ScheduleSettings({
 
         {/* Schedule visibility */}
         <div className="space-y-2">
-          <Label>Sichtbarkeit</Label>
+          <Label>{t("settings.visibility")}</Label>
           <p className="text-xs text-muted-foreground">
-            Welche Schichten koennen Mitarbeiter sehen?
+            {t("settings.visibilityDescription")}
           </p>
           <Select
             value={scheduleVisibility}
@@ -81,8 +83,8 @@ export function ScheduleSettings({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Alle Schichten</SelectItem>
-              <SelectItem value="OWN_ONLY">Nur eigene Schichten</SelectItem>
+              <SelectItem value="ALL">{t("settings.allShifts")}</SelectItem>
+              <SelectItem value="OWN_ONLY">{t("settings.ownShiftsOnly")}</SelectItem>
             </SelectContent>
           </Select>
         </div>

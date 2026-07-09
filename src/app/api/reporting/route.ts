@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import {
@@ -65,13 +66,14 @@ function getWeekDateRange(
 
 // GET /api/reporting?month=3&year=2026
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { searchParams } = request.nextUrl;
@@ -84,7 +86,7 @@ export async function GET(request: NextRequest) {
 
   if (month < 1 || month > 12 || isNaN(month) || isNaN(year)) {
     return NextResponse.json(
-      { error: "Invalid month or year" },
+      { error: t("errors.invalidMonthOrYear") },
       { status: 400 }
     );
   }

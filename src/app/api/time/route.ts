@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
@@ -21,9 +22,10 @@ function computeHoursFromRange(from: string, to: string): number {
 
 // GET /api/time — list time records for a month
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { searchParams } = request.nextUrl;
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
     const parsed = parse(monthParam, "yyyy-MM", new Date());
     if (isNaN(parsed.getTime())) {
       return NextResponse.json(
-        { error: "Invalid month format. Use yyyy-MM" },
+        { error: t("errors.invalidMonthFormat") },
         { status: 400 }
       );
     }
@@ -167,22 +169,23 @@ const createManualSchema = z.discriminatedUnion("type", [
 ]);
 
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = createManualSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -191,7 +194,7 @@ export async function POST(request: NextRequest) {
 
   // Permission check: employees can only create for themselves
   if (!isManagerOrAbove(member.role) && data.userId !== member.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   // Check that the user is in the same org
@@ -204,7 +207,7 @@ export async function POST(request: NextRequest) {
   });
   if (!targetMember) {
     return NextResponse.json(
-      { error: "User not found in organization" },
+      { error: t("errors.userNotInOrg") },
       { status: 404 }
     );
   }

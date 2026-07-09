@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember, isAdminOrAbove } from "@/lib/auth-helpers";
@@ -8,9 +9,10 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { id } = await params;
@@ -37,7 +39,7 @@ export async function GET(
   });
 
   if (!employee) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   return NextResponse.json(employee);
@@ -56,9 +58,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { id } = await params;
@@ -72,26 +75,26 @@ export async function PATCH(
   });
 
   if (!target) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   // Only admin+ or the user themselves can edit
   const isSelf = target.userId === member.userId;
   if (!isSelf && !isAdminOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = updateEmployeeSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -108,7 +111,7 @@ export async function PATCH(
     });
     if (existing) {
       return NextResponse.json(
-        { error: "Email already in use" },
+        { error: t("errors.emailAlreadyExists") },
         { status: 409 }
       );
     }
@@ -142,13 +145,14 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isAdminOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { id } = await params;
@@ -161,13 +165,13 @@ export async function DELETE(
   });
 
   if (!target) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   // Cannot deactivate yourself
   if (target.userId === member.userId) {
     return NextResponse.json(
-      { error: "Cannot deactivate yourself" },
+      { error: t("errors.cannotDeactivateSelf") },
       { status: 400 }
     );
   }
@@ -175,7 +179,7 @@ export async function DELETE(
   // Cannot deactivate the owner
   if (target.role === "OWNER") {
     return NextResponse.json(
-      { error: "Cannot deactivate the owner" },
+      { error: t("errors.cannotDeactivateOwner") },
       { status: 400 }
     );
   }

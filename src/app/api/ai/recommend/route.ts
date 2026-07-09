@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember } from "@/lib/auth-helpers";
 import { getEmployeeScores } from "@/lib/ai/employee-recommender";
@@ -10,9 +11,10 @@ import { getEmployeeScores } from "@/lib/ai/employee-recommender";
  * Accessible by any authenticated org member (same data they can already see).
  */
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { searchParams } = request.nextUrl;
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   if (!shiftId) {
     return NextResponse.json(
-      { error: "Missing shiftId parameter" },
+      { error: t("errors.missingShiftId") },
       { status: 400 }
     );
   }
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
 
   if (!shift) {
     return NextResponse.json(
-      { error: "Schicht nicht gefunden" },
+      { error: t("errors.shiftNotFound") },
       { status: 404 }
     );
   }
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[AI Recommend] Error:", error);
     return NextResponse.json(
-      { error: "Empfehlungen konnten nicht geladen werden" },
+      { error: t("errors.recommendationsFailed") },
       { status: 500 }
     );
   }

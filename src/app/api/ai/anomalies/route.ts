@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import { isAIFeatureEnabled } from "@/lib/ai/client";
 import { detectAnomalies } from "@/lib/ai/anomaly-detector";
@@ -10,14 +11,15 @@ import { detectAnomalies } from "@/lib/ai/anomaly-detector";
  * Requires MANAGER+ role and anomalyDetection to be enabled in OrgSettings.
  */
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
     return NextResponse.json(
-      { error: "Nur Manager koennen Anomalien einsehen" },
+      { error: t("errors.managersOnlyAnomalies") },
       { status: 403 }
     );
   }
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
   );
   if (!enabled) {
     return NextResponse.json(
-      { error: "Anomalie-Erkennung ist fuer diese Organisation deaktiviert" },
+      { error: t("errors.anomalyDetectionDisabled") },
       { status: 403 }
     );
   }
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
 
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
     return NextResponse.json(
-      { error: "Missing or invalid month parameter. Use yyyy-MM format." },
+      { error: t("errors.invalidMonthParam") },
       { status: 400 }
     );
   }
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[AI Anomaly Detection] Error:", error);
     return NextResponse.json(
-      { error: "Anomalien konnten nicht erkannt werden" },
+      { error: t("errors.anomalyDetectionFailed") },
       { status: 500 }
     );
   }

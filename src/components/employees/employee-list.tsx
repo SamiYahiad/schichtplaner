@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Search,
   Users,
@@ -62,46 +63,47 @@ type FilterTab = "all" | "admin" | "manager" | "not_activated" | "inactive";
 
 const tabs: {
   key: FilterTab;
-  label: string;
+  labelKey: string;
   icon: React.ElementType;
 }[] = [
-  { key: "all", label: "Alle", icon: Users },
-  { key: "admin", label: "Admins", icon: ShieldCheck },
-  { key: "manager", label: "Manager", icon: UserCog },
-  { key: "not_activated", label: "Nicht freigeschaltet", icon: AlertTriangle },
-  { key: "inactive", label: "Inaktiv", icon: UserX },
+  { key: "all", labelKey: "common.all", icon: Users },
+  { key: "admin", labelKey: "employees.tabAdmins", icon: ShieldCheck },
+  { key: "manager", labelKey: "employees.manager", icon: UserCog },
+  { key: "not_activated", labelKey: "employees.notActivatedShort", icon: AlertTriangle },
+  { key: "inactive", labelKey: "common.inactive", icon: UserX },
 ];
 
 function getInitials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
-function getRoleBadge(role: string) {
+function getRoleBadge(role: string, t: ReturnType<typeof useTranslations>) {
   switch (role) {
     case "OWNER":
       return (
         <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-          Owner
+          {t("employees.owner")}
         </Badge>
       );
     case "ADMIN":
       return (
         <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-          Admin
+          {t("employees.admin")}
         </Badge>
       );
     case "MANAGER":
       return (
         <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-          Manager
+          {t("employees.manager")}
         </Badge>
       );
     default:
-      return <Badge variant="secondary">Mitarbeiter</Badge>;
+      return <Badge variant="secondary">{t("employees.employee")}</Badge>;
   }
 }
 
 export function EmployeeList() {
+  const t = useTranslations();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const router = useRouter();
@@ -124,7 +126,7 @@ export function EmployeeList() {
     queryKey: ["employees", activeTab, search],
     queryFn: async () => {
       const res = await fetch(`/api/employees?${queryParams.toString()}`);
-      if (!res.ok) throw new Error("Fehler beim Laden der Mitarbeiter");
+      if (!res.ok) throw new Error(t("employees.errorLoadEmployeesRetry"));
       return res.json();
     },
   });
@@ -134,9 +136,9 @@ export function EmployeeList() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Mitarbeiter</h1>
+          <h1 className="text-2xl font-bold">{t("employees.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Verwalte dein Team und weise Rollen zu
+            {t("employees.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -146,7 +148,7 @@ export function EmployeeList() {
             onClick={() => router.push("/employees/absences")}
           >
             <CalendarDays className="size-4" />
-            <span className="hidden sm:inline">Abwesenheiten</span>
+            <span className="hidden sm:inline">{t("employees.absences")}</span>
           </Button>
           {isAdmin && <EmployeeForm />}
         </div>
@@ -159,7 +161,7 @@ export function EmployeeList() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Suche nach Name oder E-Mail..."
+            placeholder={t("employees.searchPlaceholder")}
             className="pl-9"
           />
         </div>
@@ -181,7 +183,7 @@ export function EmployeeList() {
                 )}
               >
                 <Icon className="size-3.5" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="hidden sm:inline">{t(tab.labelKey)}</span>
                 <span className="tabular-nums text-xs opacity-70">
                   ({count})
                 </span>
@@ -194,7 +196,7 @@ export function EmployeeList() {
       {/* Error */}
       {error && (
         <Card className="p-6 text-center text-destructive">
-          Fehler beim Laden der Mitarbeiter. Bitte versuche es erneut.
+          {t("employees.errorLoadEmployeesRetry")}
         </Card>
       )}
 
@@ -205,11 +207,11 @@ export function EmployeeList() {
       {!isLoading && !error && data?.members?.length === 0 && (
         <Card className="flex flex-col items-center justify-center p-12 text-center">
           <Users className="size-12 text-muted-foreground/50 mb-3" />
-          <p className="text-lg font-medium">Keine Mitarbeiter gefunden</p>
+          <p className="text-lg font-medium">{t("employees.noEmployeesFound")}</p>
           <p className="text-sm text-muted-foreground mt-1">
             {search
-              ? "Versuche eine andere Suche."
-              : "Lege deinen ersten Mitarbeiter an."}
+              ? t("employees.tryDifferentSearch")
+              : t("employees.createFirstEmployee")}
           </p>
         </Card>
       )}
@@ -221,10 +223,10 @@ export function EmployeeList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>E-Mail</TableHead>
-                  <TableHead>Rolle</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("employees.name")}</TableHead>
+                  <TableHead>{t("employees.email")}</TableHead>
+                  <TableHead>{t("employees.role")}</TableHead>
+                  <TableHead>{t("employees.status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -262,24 +264,24 @@ export function EmployeeList() {
                     <TableCell className="text-muted-foreground">
                       {emp.user.email}
                     </TableCell>
-                    <TableCell>{getRoleBadge(emp.role)}</TableCell>
+                    <TableCell>{getRoleBadge(emp.role, t)}</TableCell>
                     <TableCell>
                       {!emp.isActive ? (
-                        <Badge variant="destructive">Inaktiv</Badge>
+                        <Badge variant="destructive">{t("common.inactive")}</Badge>
                       ) : !emp.isActivated ? (
                         <Badge
                           variant="outline"
                           className="border-amber-500 text-amber-600"
                         >
                           <AlertTriangle className="size-3" />
-                          Nicht freigeschaltet
+                          {t("employees.notActivatedShort")}
                         </Badge>
                       ) : (
                         <Badge
                           variant="outline"
                           className="border-emerald-500 text-emerald-600"
                         >
-                          Aktiv
+                          {t("common.active")}
                         </Badge>
                       )}
                     </TableCell>
@@ -311,7 +313,7 @@ export function EmployeeList() {
                       <span className="truncate font-medium">
                         {emp.user.lastName}, {emp.user.firstName}
                       </span>
-                      {getRoleBadge(emp.role)}
+                      {getRoleBadge(emp.role, t)}
                     </div>
                     <div className="text-sm text-muted-foreground truncate">
                       {emp.user.email}
@@ -319,7 +321,7 @@ export function EmployeeList() {
                   </div>
                   <div>
                     {!emp.isActive ? (
-                      <Badge variant="destructive">Inaktiv</Badge>
+                      <Badge variant="destructive">{t("common.inactive")}</Badge>
                     ) : !emp.isActivated ? (
                       <AlertTriangle className="size-4 text-amber-500" />
                     ) : null}

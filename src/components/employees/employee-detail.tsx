@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -83,16 +84,16 @@ function getInitials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
-function getRoleLabel(role: string) {
+function getRoleLabel(role: string, t: ReturnType<typeof useTranslations>) {
   switch (role) {
     case "OWNER":
-      return "Owner";
+      return t("employees.owner");
     case "ADMIN":
-      return "Admin";
+      return t("employees.admin");
     case "MANAGER":
-      return "Manager";
+      return t("employees.manager");
     default:
-      return "Mitarbeiter";
+      return t("employees.employee");
   }
 }
 
@@ -189,6 +190,8 @@ function InlineEdit({
 }
 
 export function EmployeeDetail({ memberId }: { memberId: string }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: currentMember } = useCurrentMember();
@@ -209,7 +212,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
     queryKey: ["employee", memberId],
     queryFn: async () => {
       const res = await fetch(`/api/employees/${memberId}`);
-      if (!res.ok) throw new Error("Mitarbeiter nicht gefunden");
+      if (!res.ok) throw new Error(t("employees.notFound"));
       return res.json();
     },
   });
@@ -235,12 +238,12 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Fehler beim Speichern");
+        throw new Error(err.error || t("employees.errorSave"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Gespeichert");
+      toast.success(t("employees.toastSaved"));
       queryClient.invalidateQueries({ queryKey: ["employee", memberId] });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
@@ -259,12 +262,12 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Fehler beim Aendern der Rolle");
+        throw new Error(err.error || t("employees.errorChangeRole"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Rolle geaendert");
+      toast.success(t("employees.toastRoleChanged"));
       queryClient.invalidateQueries({ queryKey: ["employee", memberId] });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
@@ -281,12 +284,12 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Fehler beim Deaktivieren");
+        throw new Error(err.error || t("employees.errorDeactivate"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Mitarbeiter deaktiviert");
+      toast.success(t("employees.toastDeactivated"));
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       router.push("/employees");
     },
@@ -305,12 +308,12 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Fehler beim Speichern der Notiz");
+        throw new Error(err.error || t("employees.errorSaveNote"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Notiz gespeichert");
+      toast.success(t("employees.toastNoteSaved"));
       setNoteText("");
       queryClient.invalidateQueries({
         queryKey: ["employee-notes", memberId],
@@ -330,10 +333,10 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
       <div className="space-y-4">
         <Button variant="ghost" onClick={() => router.push("/employees")}>
           <ArrowLeft className="size-4" />
-          Zurueck
+          {t("common.back")}
         </Button>
         <Card className="p-12 text-center">
-          <p className="text-destructive">Mitarbeiter nicht gefunden.</p>
+          <p className="text-destructive">{t("employees.notFound")}</p>
         </Card>
       </div>
     );
@@ -349,7 +352,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
       {/* Back button */}
       <Button variant="ghost" onClick={() => router.push("/employees")}>
         <ArrowLeft className="size-4" />
-        Zurueck zur Liste
+        {t("employees.backToList")}
       </Button>
 
       {/* Header */}
@@ -369,17 +372,17 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <Badge className={getRoleBadgeColor(employee.role)}>
-                {getRoleLabel(employee.role)}
+                {getRoleLabel(employee.role, t)}
               </Badge>
               {!employee.isActive && (
-                <Badge variant="destructive">Inaktiv</Badge>
+                <Badge variant="destructive">{t("common.inactive")}</Badge>
               )}
               {employee.isActive && !employee.isActivated && (
                 <Badge
                   variant="outline"
                   className="border-amber-500 text-amber-600"
                 >
-                  Nicht freigeschaltet
+                  {t("employees.notActivatedShort")}
                 </Badge>
               )}
             </div>
@@ -390,7 +393,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
         {(canChangeRole || canDelete) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Aktionen</Button>
+              <Button variant="outline">{t("employees.actions")}</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {canDelete && employee.isActive && (
@@ -399,7 +402,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                   onClick={() => setDeleteOpen(true)}
                 >
                   <Trash2 className="size-4" />
-                  Deaktivieren
+                  {t("employees.deactivate")}
                 </DropdownMenuItem>
               )}
               {canDelete && !employee.isActive && (
@@ -407,10 +410,10 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                   onClick={() => {
                     // Reactivate by updating isActive through a custom approach
                     // For now we use the PATCH endpoint concept
-                    toast.info("Reaktivierung noch nicht implementiert");
+                    toast.info(t("employees.reactivateNotImplemented"));
                   }}
                 >
-                  Reaktivieren
+                  {t("employees.reactivate")}
                 </DropdownMenuItem>
               )}
               {canChangeRole && (
@@ -423,7 +426,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                         key={r}
                         onClick={() => roleMutation.mutate(r)}
                       >
-                        Rolle zu {getRoleLabel(r)} aendern
+                        {t("employees.changeRoleTo", { role: getRoleLabel(r, t) })}
                       </DropdownMenuItem>
                     ))}
                 </>
@@ -440,13 +443,13 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
           {/* Contact Info */}
           <Card className="p-5 space-y-4">
             <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wide">
-              Kontaktdaten
+              {t("employees.contactData")}
             </h2>
 
             <div className="space-y-3">
               {/* Name */}
               <div className="grid grid-cols-[120px_1fr] items-center">
-                <span className="text-sm text-muted-foreground">Vorname</span>
+                <span className="text-sm text-muted-foreground">{t("employees.firstName")}</span>
                 <InlineEdit
                   value={employee.user.firstName}
                   onSave={(v) => updateMutation.mutate({ firstName: v })}
@@ -454,7 +457,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                 />
               </div>
               <div className="grid grid-cols-[120px_1fr] items-center">
-                <span className="text-sm text-muted-foreground">Nachname</span>
+                <span className="text-sm text-muted-foreground">{t("employees.lastName")}</span>
                 <InlineEdit
                   value={employee.user.lastName}
                   onSave={(v) => updateMutation.mutate({ lastName: v })}
@@ -462,7 +465,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                 />
               </div>
               <div className="grid grid-cols-[120px_1fr] items-center">
-                <span className="text-sm text-muted-foreground">Spitzname</span>
+                <span className="text-sm text-muted-foreground">{t("employees.nickname")}</span>
                 <InlineEdit
                   value={employee.user.nickname || ""}
                   onSave={(v) => updateMutation.mutate({ nickname: v })}
@@ -474,7 +477,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
               <div className="grid grid-cols-[120px_1fr] items-center">
                 <span className="text-sm text-muted-foreground">
                   <Mail className="inline size-3.5 mr-1" />
-                  E-Mail
+                  {t("employees.email")}
                 </span>
                 <InlineEdit
                   value={employee.user.email}
@@ -488,7 +491,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
               <div className="grid grid-cols-[120px_1fr] items-center">
                 <span className="text-sm text-muted-foreground">
                   <Phone className="inline size-3.5 mr-1" />
-                  Telefon
+                  {t("employees.phone")}
                 </span>
                 <InlineEdit
                   value={employee.user.phone || ""}
@@ -502,7 +505,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
             {/* Role change (inline) */}
             {canChangeRole && (
               <div className="grid grid-cols-[120px_1fr] items-center pt-2 border-t">
-                <span className="text-sm text-muted-foreground">Rolle</span>
+                <span className="text-sm text-muted-foreground">{t("employees.role")}</span>
                 <Select
                   value={employee.role}
                   onValueChange={(v) => roleMutation.mutate(v)}
@@ -512,9 +515,9 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="MANAGER">Manager</SelectItem>
-                    <SelectItem value="EMPLOYEE">Mitarbeiter</SelectItem>
+                    <SelectItem value="ADMIN">{t("employees.admin")}</SelectItem>
+                    <SelectItem value="MANAGER">{t("employees.manager")}</SelectItem>
+                    <SelectItem value="EMPLOYEE">{t("employees.employee")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -524,12 +527,12 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
           {/* Quick Navigation */}
           <Card className="p-5 space-y-3">
             <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wide">
-              Navigation
+              {t("common.navigation")}
             </h2>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" disabled>
                 <Clock className="size-4" />
-                Stunden
+                {t("employees.hours")}
               </Button>
             </div>
           </Card>
@@ -539,7 +542,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
             <Card className="p-5 space-y-4">
               <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wide">
                 <StickyNote className="inline size-3.5 mr-1" />
-                Notizen
+                {t("employees.notes")}
               </h2>
 
               {/* Add note form */}
@@ -547,7 +550,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                 <Textarea
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Notiz hinzufuegen..."
+                  placeholder={t("employees.addNotePlaceholder")}
                   className="min-h-[60px]"
                 />
                 <Button
@@ -583,7 +586,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                         </span>
                         <span>-</span>
                         <span>
-                          {new Date(note.createdAt).toLocaleDateString("de-DE", {
+                          {new Date(note.createdAt).toLocaleDateString(locale, {
                             day: "2-digit",
                             month: "2-digit",
                             year: "numeric",
@@ -597,7 +600,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Noch keine Notizen vorhanden.
+                  {t("employees.noNotes")}
                 </p>
               )}
             </Card>
@@ -608,13 +611,13 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
         <div className="space-y-6">
           <Card className="p-5">
             <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wide mb-4">
-              Monatsuebersicht
+              {t("employees.monthOverview")}
             </h2>
             <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
               <Clock className="size-10 opacity-30 mb-3" />
               <p className="text-sm font-medium">E-Dash</p>
               <p className="text-xs mt-1">
-                Stundenauswertung wird mit dem Zeiterfassungsmodul verfuegbar.
+                {t("employees.hoursEvalComingSoon")}
               </p>
             </div>
           </Card>
@@ -622,13 +625,13 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
           {/* Member Meta */}
           <Card className="p-5 space-y-3">
             <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wide">
-              Mitgliedschaft
+              {t("employees.membership")}
             </h2>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Beigetreten</span>
+                <span className="text-muted-foreground">{t("employees.joined")}</span>
                 <span>
-                  {new Date(employee.joinedAt).toLocaleDateString("de-DE", {
+                  {new Date(employee.joinedAt).toLocaleDateString(locale, {
                     day: "2-digit",
                     month: "2-digit",
                     year: "numeric",
@@ -636,17 +639,17 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-muted-foreground">{t("employees.status")}</span>
                 <span>
-                  {employee.isActive ? "Aktiv" : "Inaktiv"}
+                  {employee.isActive ? t("common.active") : t("common.inactive")}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Freigeschaltet</span>
-                <span>{employee.isActivated ? "Ja" : "Nein"}</span>
+                <span className="text-muted-foreground">{t("employees.activated")}</span>
+                <span>{employee.isActivated ? t("employees.yes") : t("employees.no")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Member-ID</span>
+                <span className="text-muted-foreground">{t("employees.memberId")}</span>
                 <span className="font-mono text-xs text-muted-foreground">
                   {employee.id}
                 </span>
@@ -660,16 +663,16 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Mitarbeiter deaktivieren?</DialogTitle>
+            <DialogTitle>{t("employees.deactivateConfirmTitle")}</DialogTitle>
             <DialogDescription>
-              {employee.user.firstName} {employee.user.lastName} wird
-              deaktiviert und hat keinen Zugriff mehr auf die Organisation. Diese
-              Aktion kann rueckgaengig gemacht werden.
+              {t("employees.deactivateConfirmDescription", {
+                name: `${employee.user.firstName} ${employee.user.lastName}`,
+              })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>
-              Abbrechen
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -682,7 +685,7 @@ export function EmployeeDetail({ memberId }: { memberId: string }) {
               {deleteMutation.isPending && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              Deaktivieren
+              {t("employees.deactivate")}
             </Button>
           </DialogFooter>
         </DialogContent>

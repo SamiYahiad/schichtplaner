@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Bot, User, Wrench, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,13 +25,13 @@ export interface ChatMessageData {
 
 // ─── Tool name display mapping ──────────────────────────────────────
 
-const TOOL_LABELS: Record<string, string> = {
-  getSchedule: "Schichtplan abgerufen",
-  getEmployeeHours: "Stunden abgerufen",
-  searchEmployees: "Mitarbeiter gesucht",
-  createShift: "Schicht erstellt",
-  bookEmployee: "Mitarbeiter eingebucht",
-  getAbsences: "Abwesenheiten abgerufen",
+const TOOL_LABEL_KEYS: Record<string, string> = {
+  getSchedule: "ai.tool.getSchedule",
+  getEmployeeHours: "ai.tool.getEmployeeHours",
+  searchEmployees: "ai.tool.searchEmployees",
+  createShift: "ai.tool.createShift",
+  bookEmployee: "ai.tool.bookEmployee",
+  getAbsences: "ai.tool.getAbsences",
 };
 
 // ─── Component ──────────────────────────────────────────────────────
@@ -40,6 +41,8 @@ interface ChatMessagesProps {
 }
 
 export function ChatMessages({ messages }: ChatMessagesProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages
@@ -55,12 +58,10 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
         <div className="space-y-2">
           <Bot className="mx-auto size-10 text-indigo-300" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            Hallo! Ich bin dein KI-Assistent.
+            {t("ai.greeting")}
           </p>
           <p className="text-xs text-muted-foreground max-w-[260px]">
-            Frag mich nach Schichtplaenen, Mitarbeitern, Stunden oder
-            Abwesenheiten. Ich kann auch Schichten erstellen oder Mitarbeiter
-            einbuchen.
+            {t("ai.greetingDescription")}
           </p>
         </div>
       </div>
@@ -134,7 +135,7 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
               msg.role === "user" ? "text-right mr-9" : "ml-9"
             )}
           >
-            {formatTime(msg.timestamp)}
+            {formatTime(msg.timestamp, locale)}
           </div>
         </div>
       ))}
@@ -145,7 +146,9 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
 // ─── Tool Result Card ──────────────────────────────────────────────
 
 function ToolResultCard({ tool }: { tool: ToolResultInfo }) {
-  const label = TOOL_LABELS[tool.toolName] ?? tool.toolName;
+  const t = useTranslations();
+  const labelKey = TOOL_LABEL_KEYS[tool.toolName];
+  const label = labelKey ? t(labelKey) : tool.toolName;
 
   return (
     <div className="rounded-lg border bg-white dark:bg-slate-900 p-2 text-xs">
@@ -158,7 +161,7 @@ function ToolResultCard({ tool }: { tool: ToolResultInfo }) {
         <span className="font-medium">{label}</span>
         {tool.requiresConfirmation && (
           <span className="text-amber-600 dark:text-amber-400 text-[10px]">
-            (Aktion ausgefuehrt)
+            ({t("ai.actionExecuted")})
           </span>
         )}
       </div>
@@ -171,8 +174,8 @@ function ToolResultCard({ tool }: { tool: ToolResultInfo }) {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("de-DE", {
+function formatTime(date: Date, locale: string): string {
+  return date.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   });

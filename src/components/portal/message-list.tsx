@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { getDateFnsLocale } from "@/i18n/date-fns-locale";
 import {
   Mail,
   MailOpen,
@@ -50,6 +51,8 @@ interface Props {
 
 export function MessageList({ folder }: Props) {
   const router = useRouter();
+  const t = useTranslations();
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [composeOpen, setComposeOpen] = useState(false);
@@ -90,7 +93,7 @@ export function MessageList({ folder }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages"] });
       setSelected(new Set());
-      toast.success("Nachrichten geloescht");
+      toast.success(t("portal.messagesDeleted"));
     },
   });
 
@@ -117,9 +120,9 @@ export function MessageList({ folder }: Props) {
   }
 
   const folderLabels = {
-    inbox: "Posteingang",
-    sent: "Gesendete",
-    trash: "Papierkorb",
+    inbox: t("portal.inbox"),
+    sent: t("portal.sent"),
+    trash: t("portal.trash"),
   };
 
   return (
@@ -129,7 +132,7 @@ export function MessageList({ folder }: Props) {
         <h1 className="text-2xl font-bold">{folderLabels[folder]}</h1>
         <Button onClick={() => setComposeOpen(true)} className="gap-2">
           <MailPlus className="size-4" />
-          Neue Nachricht
+          {t("portal.newMessage")}
         </Button>
       </div>
 
@@ -137,7 +140,7 @@ export function MessageList({ folder }: Props) {
       {selected.size > 0 && (
         <div className="mb-3 flex items-center gap-2 rounded-md bg-slate-100 p-2 dark:bg-slate-800">
           <span className="text-sm text-slate-600 dark:text-slate-400">
-            {selected.size} ausgewaehlt
+            {t("portal.selectedCount", { count: selected.size })}
           </span>
           {folder === "inbox" && (
             <>
@@ -149,7 +152,7 @@ export function MessageList({ folder }: Props) {
                 }
               >
                 <MailOpen className="mr-1 size-4" />
-                Gelesen
+                {t("portal.markRead")}
               </Button>
               <Button
                 variant="ghost"
@@ -159,7 +162,7 @@ export function MessageList({ folder }: Props) {
                 }
               >
                 <Trash2 className="mr-1 size-4" />
-                Loeschen
+                {t("common.delete")}
               </Button>
             </>
           )}
@@ -173,7 +176,7 @@ export function MessageList({ folder }: Props) {
                 }
               >
                 <RotateCcw className="mr-1 size-4" />
-                Wiederherstellen
+                {t("portal.restore")}
               </Button>
               <Button
                 variant="ghost"
@@ -182,7 +185,7 @@ export function MessageList({ folder }: Props) {
                 onClick={() => deleteMutation.mutate(Array.from(selected))}
               >
                 <Trash2 className="mr-1 size-4" />
-                Endgueltig loeschen
+                {t("portal.deletePermanently")}
               </Button>
             </>
           )}
@@ -200,9 +203,9 @@ export function MessageList({ folder }: Props) {
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-slate-500">
           <Mail className="mb-3 size-10 text-slate-300" />
           <p className="text-sm">
-            {folder === "inbox" && "Keine Nachrichten im Posteingang"}
-            {folder === "sent" && "Keine gesendeten Nachrichten"}
-            {folder === "trash" && "Papierkorb ist leer"}
+            {folder === "inbox" && t("portal.noInboxMessages")}
+            {folder === "sent" && t("portal.noSentMessages")}
+            {folder === "trash" && t("portal.trashEmpty")}
           </p>
         </div>
       ) : (
@@ -218,7 +221,7 @@ export function MessageList({ folder }: Props) {
               className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400"
             >
               <CheckSquare className="mr-1 inline size-3" />
-              Alle
+              {t("common.all")}
             </button>
           </div>
 
@@ -250,7 +253,7 @@ export function MessageList({ folder }: Props) {
                       {folder === "sent"
                         ? msg.recipients
                             .map((r) =>
-                              r.user ? `${r.user.firstName} ${r.user.lastName}` : "Unbekannt"
+                              r.user ? `${r.user.firstName} ${r.user.lastName}` : t("portal.unknownUser")
                             )
                             .join(", ")
                         : `${msg.sender.firstName} ${msg.sender.lastName}`}
@@ -269,7 +272,7 @@ export function MessageList({ folder }: Props) {
 
                   {/* Date */}
                   <time className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
-                    {format(new Date(msg.createdAt), "dd. MMM yyyy, HH:mm", { locale: de })}
+                    {format(new Date(msg.createdAt), "dd. MMM yyyy, HH:mm", { locale: getDateFnsLocale(locale) })}
                   </time>
                 </div>
               </div>

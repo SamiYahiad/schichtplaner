@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
@@ -19,19 +20,20 @@ import { MobileNav } from "./mobile-nav";
 import { ConnectionStatus } from "./connection-status";
 
 const navItems = [
-  { key: "schedule", icon: CalendarDays, href: "/schedule/flexible", label: "Schichtplaene" },
-  { key: "time", icon: Clock, href: "/time", label: "Zeiterfassung" },
-  { key: "employees", icon: Users, href: "/employees", label: "Mitarbeiter" },
-  { key: "divisions", icon: Building2, href: "/divisions", label: "Arbeitsbereiche" },
-  { key: "portal", icon: MessageSquare, href: "/portal/inbox", label: "Portal" },
-  { key: "reporting", icon: BarChart3, href: "/reporting", label: "Auswertung" },
-  { key: "settings", icon: Settings, href: "/settings", label: "Einstellungen" },
+  { key: "schedule", icon: CalendarDays, href: "/schedule/flexible" },
+  { key: "time", icon: Clock, href: "/time" },
+  { key: "employees", icon: Users, href: "/employees" },
+  { key: "divisions", icon: Building2, href: "/divisions" },
+  { key: "portal", icon: MessageSquare, href: "/portal/inbox" },
+  { key: "reporting", icon: BarChart3, href: "/reporting" },
+  { key: "settings", icon: Settings, href: "/settings" },
 ] as const;
 
 export { navItems };
 
 export function TopNav() {
   const pathname = usePathname();
+  const t = useTranslations();
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ["messages", "unread-count"],
@@ -78,7 +80,7 @@ export function TopNav() {
                 )}
               >
                 <Icon className="size-4" />
-                <span className="hidden lg:inline">{item.label}</span>
+                <span className="hidden lg:inline">{t(`nav.${item.key}`)}</span>
                 {item.key === "portal" && unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                     {unreadCount > 9 ? "9+" : unreadCount}
@@ -102,7 +104,7 @@ export function TopNav() {
             )}
           >
             <Sparkles className="size-4" />
-            <span className="hidden lg:inline">KI</span>
+            <span className="hidden lg:inline">{t("nav.ai")}</span>
           </Link>
 
           <ConnectionStatus />

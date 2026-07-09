@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 export default function Error({
   error,
@@ -9,6 +10,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("errors");
+
   useEffect(() => {
     console.error("Application error:", error);
   }, [error]);
@@ -32,21 +35,21 @@ export default function Error({
           </svg>
         </div>
         <h2 className="mt-4 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Etwas ist schiefgelaufen
+          {t("title")}
         </h2>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
-          Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.
+          {t("description")}
         </p>
         {error.digest && (
           <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-            Fehler-ID: {error.digest}
+            {t("errorId")}: {error.digest}
           </p>
         )}
         <button
           onClick={reset}
           className="mt-8 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
         >
-          Erneut versuchen
+          {t("retry")}
         </button>
       </div>
     </div>
