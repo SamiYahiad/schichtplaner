@@ -179,8 +179,7 @@ export function DivisionCard({ division, isAdmin }: DivisionCardProps) {
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Users className="size-4" />
             <span>
-              {division.memberCount}{" "}
-              {t("employees.employee")}
+              {t("employees.employeeCount", { count: division.memberCount })}
             </span>
           </div>
 

@@ -329,6 +329,7 @@
     "admin": "Admin",
     "manager": "Manager",
     "employee": "Employé",
+    "employeeCount": "{count, plural, one {# Employé} other {# Employés}}",
     "activate": "Activer",
     "deactivate": "Désactiver",
     "notActivated": "Accès non activé",
