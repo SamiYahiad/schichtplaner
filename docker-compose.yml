@@ -71,6 +71,10 @@ services:
       S3_ENDPOINT: http://minio:9000
       S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set in .env}
+      # Derived from the same DOMAIN Caddy provisions HTTPS for, not from .env's NEXTAUTH_URL/APP_URL:
+      # the app is only ever reachable through Caddy on https://$DOMAIN, so these must always match.
+      NEXTAUTH_URL: https://${DOMAIN:-localhost}
+      APP_URL: https://${DOMAIN:-localhost}
     expose:
       - "3000"
     healthcheck:
