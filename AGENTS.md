@@ -27,13 +27,52 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `prisma/seed.ts`) is intentionally left in German and not routed through message keys — it's user-editable
   data, not app chrome, same category as any other org's real data.
 
-## Known pre-existing bugs (not introduced by i18n work, still open)
+## Docker production stack (docker-compose.yml / Dockerfile / Caddyfile)
 
-- `prisma/migrations/20260301144238_init` is missing the `mod_requests.note` column that
-  `prisma/schema.prisma`'s `ModRequest` model declares. Any request that queries `ModRequest` (e.g.
-  `GET /api/mod-requests`, used by the wish-plan feature) 500s with `P2022: column "mod_requests.note" does
-  not exist` against a freshly-migrated database. Needs a follow-up migration, not something to bundle into an
-  unrelated PR.
+A `docker compose up -d --build` from a clean checkout now comes up healthy end to end
+(postgres, redis, minio, migrate, app, caddy) and is auth-safe. It did not before; the traps below
+are exactly what broke and why, so they don't get re-introduced by a future edit:
+
+- **Migrations never ran at all.** There was no entrypoint or compose step invoking `prisma migrate
+  deploy`, so a fresh stack produced a completely empty database (zero tables) while the app
+  container still reported healthy. Fixed with a `migrator` Dockerfile stage (full `node_modules`
+  copied from the `deps` stage, since the trimmed standalone runner image has no Prisma CLI) and a
+  one-shot `migrate` compose service (`prisma migrate deploy`) that `app` depends on via
+  `condition: service_completed_successfully`. To seed demo data afterwards (optional, not run
+  automatically — it's demo data, not something a real prod deploy should auto-seed), run
+  `docker compose run --rm migrate sh -c "npx prisma generate && npx tsx prisma/seed.ts"`.
+  `prisma.config.ts`'s `import "dotenv/config"` resolves fine in that stage because `dotenv` is
+  present transitively (via `prisma`'s own `c12` dependency) even though it's not a direct
+  `package.json` dependency.
+- **`mod_requests.note` migration gap (now fixed):** the original `20260301144238_init` migration
+  was missing the `note` column `prisma/schema.prisma`'s `ModRequest` model declares, so
+  `GET /api/mod-requests` 500'd with `P2022`. Fixed by an additive follow-up migration
+  (`20260305000000_add_mod_requests_note`) rather than editing the already-applied init migration.
+- **Auth bypass: NextAuth `UntrustedHost` behind Caddy made protected pages fail open.** Self-hosting
+  Auth.js behind any reverse proxy (this Caddy setup, or nginx, or anything that isn't a platform
+  Auth.js auto-trusts like Vercel) throws `UntrustedHost` on every request unless `trustHost: true`
+  is set in `src/lib/auth.config.ts`. Before that fix, the middleware's `!req.auth` check silently
+  saw a failed auth resolution as "not applicable" and let unauthenticated requests through to
+  protected pages with a 200 instead of redirecting to `/login` — i.e. the reverse-proxy deployment
+  had **no working authentication at all**. Always re-verify this with a real unauthenticated
+  `curl -sk https://localhost/schedule/...` (expect a 307 to `/login`) after touching
+  `auth.config.ts` or the Caddy/compose networking.
+- **Login redirects were dead in production even after fixing UntrustedHost.** The middleware's
+  `NextResponse.redirect(new URL("/login", req.url))` resolved against `NEXTAUTH_URL`
+  (`http://localhost:3000` in `.env.example`'s dev-oriented default), not the actual public
+  `https://$DOMAIN` origin Caddy serves — and port 3000 isn't even published to the host, so every
+  redirect 404'd/refused in a browser. Fixed by having `docker-compose.yml`'s `app` service derive
+  `NEXTAUTH_URL` and `APP_URL` as `https://${DOMAIN:-localhost}` directly from the same `DOMAIN` Caddy
+  uses, instead of requiring `.env` to keep two URLs in sync by hand. Do not reintroduce a
+  standalone `NEXTAUTH_URL`/`APP_URL` in `.env(.production.example)` — they're compose-computed now.
+- **`/api/health` must stay in `src/middleware.ts`'s `publicPaths`.** It's the Docker healthcheck
+  target (`wget http://127.0.0.1:3000/api/health`); before `trustHost` was fixed it was incidentally
+  reachable (auth was accidentally failing open), so this was easy to miss. With auth actually
+  enforced, an unauthenticated healthcheck hitting a non-public route means the container never goes
+  healthy and Caddy (which `depends_on: app: condition: service_healthy`) never starts.
+- The app healthcheck itself must use `http://127.0.0.1:3000/...`, not `localhost` — inside the
+  container `localhost` resolves to `::1` (IPv6) first and gets connection-refused even though the
+  app is genuinely up and correct on IPv4.
 
 ## Local dev DB without docker/sudo
 

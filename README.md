@@ -281,10 +281,20 @@ The `docker-compose.yml` automatically starts:
 - **PostgreSQL 16** — database, seeded from `POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB`
 - **Redis 7** — caching
 - **MinIO** — file storage (S3-compatible), seeded from `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` (also used as the app's S3 credentials)
+- **`migrate`** — one-shot job that runs `prisma migrate deploy` against Postgres before the app starts
 - **Next.js App** — application (port 3000)
 - **Caddy** — reverse proxy with auto-HTTPS (Let's Encrypt), using `DOMAIN` for the certificate
 
 Postgres, Redis and MinIO are only reachable on the internal Compose network, not published to the host.
+
+`NEXTAUTH_URL`/`APP_URL` are derived automatically from `DOMAIN` — don't set them yourself.
+
+To load the demo dataset (optional; not run automatically since it's demo data, not something a real
+deployment should seed on its own):
+
+```bash
+docker compose run --rm migrate sh -c "npx prisma generate && npx tsx prisma/seed.ts"
+```
 
 > **Note:** the production Dockerfile runs Next's standalone `server.js`, not `server.ts`, so the Socket.IO-based real-time features (Live sessions) don't run in this Docker setup yet. See [`AGENTS.md`](AGENTS.md) for details and options.
 
