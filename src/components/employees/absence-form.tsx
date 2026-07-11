@@ -148,7 +148,7 @@ export function AbsenceForm({
     open,
     absence,
     currentMember,
-    categories,
+    categoriesData,
     defaultDateFrom,
     defaultDateTo,
   });
@@ -156,7 +156,7 @@ export function AbsenceForm({
     open !== prevResetDeps.open ||
     absence !== prevResetDeps.absence ||
     currentMember !== prevResetDeps.currentMember ||
-    categories !== prevResetDeps.categories ||
+    categoriesData !== prevResetDeps.categoriesData ||
     defaultDateFrom !== prevResetDeps.defaultDateFrom ||
     defaultDateTo !== prevResetDeps.defaultDateTo;
   if (resetDepsChanged) {
@@ -164,7 +164,7 @@ export function AbsenceForm({
       open,
       absence,
       currentMember,
-      categories,
+      categoriesData,
       defaultDateFrom,
       defaultDateTo,
     });
