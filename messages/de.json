@@ -57,6 +57,7 @@
   },
   "schedule": {
     "title": "Schichtplan",
+    "shift": "Schicht",
     "createShift": "Schicht erstellen",
     "editShift": "Schicht bearbeiten",
     "deleteShift": "Schicht löschen",

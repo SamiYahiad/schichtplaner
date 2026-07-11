@@ -57,6 +57,7 @@
   },
   "schedule": {
     "title": "Planning",
+    "shift": "Créneau",
     "createShift": "Créer un créneau",
     "editShift": "Modifier le créneau",
     "deleteShift": "Supprimer le créneau",

@@ -31,7 +31,7 @@ export function ClassicGrid({ weekNumber, year, weekDates }: ClassicGridProps) {
     queryKey: ["schedule", weekNumber, year],
     queryFn: async () => {
       const res = await fetch(`/api/schedules?kw=${weekNumber}&year=${year}`);
-      if (!res.ok) throw new Error(t("schedule.errorLoadingShifts"));
+      if (!res.ok) throw new Error(t("schedule.errorLoadingSchedule"));
       return res.json();
     },
   });
@@ -88,7 +88,7 @@ export function ClassicGrid({ weekNumber, year, weekDates }: ClassicGridProps) {
   if (timeSlots.length === 0) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
-        {t("schedule.noShiftsThisWeek")}
+        {t("schedule.noShifts")}
       </div>
     );
   }

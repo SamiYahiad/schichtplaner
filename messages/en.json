@@ -57,6 +57,7 @@
   },
   "schedule": {
     "title": "Schedule",
+    "shift": "Shift",
     "createShift": "Create Shift",
     "editShift": "Edit Shift",
     "deleteShift": "Delete Shift",

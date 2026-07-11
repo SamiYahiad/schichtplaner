@@ -83,7 +83,9 @@ export function TopicDetail({ topicId }: Props) {
       const res = await fetch(`/api/topics/${topicId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed");
+        const error = new Error(data.error || "Failed") as Error & { status: number };
+        error.status = res.status;
+        throw error;
       }
     },
     onSuccess: () => {
@@ -91,8 +93,8 @@ export function TopicDetail({ topicId }: Props) {
       toast.success(t("portal.topicDeleted"));
       router.push("/portal/topics");
     },
-    onError: (error: Error) => {
-      toast.error(error.message === "Forbidden" ? t("portal.topicDeleteForbidden") : t("portal.deleteError"));
+    onError: (error: Error & { status?: number }) => {
+      toast.error(error.status === 403 ? t("portal.topicDeleteForbidden") : t("portal.deleteError"));
     },
   });
 

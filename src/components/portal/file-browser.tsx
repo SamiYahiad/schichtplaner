@@ -96,7 +96,9 @@ export function FileBrowser() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed");
+        const error = new Error(data.error || "Failed") as Error & { status: number };
+        error.status = res.status;
+        throw error;
       }
       return res.json();
     },
@@ -106,8 +108,8 @@ export function FileBrowser() {
       setFolderName("");
       setCreateFolderOpen(false);
     },
-    onError: (error: Error) => {
-      toast.error(error.message === "Forbidden" ? t("portal.noPermission") : t("portal.createError"));
+    onError: (error: Error & { status?: number }) => {
+      toast.error(error.status === 403 ? t("portal.noPermission") : t("portal.createError"));
     },
   });
 
