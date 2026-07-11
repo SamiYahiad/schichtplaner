@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -108,7 +108,9 @@ export function TimeRecordForm({
   );
 
   // Reset form when dialog opens
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       if (record) {
         setUserId(record.userId);
@@ -136,7 +138,7 @@ export function TimeRecordForm({
         setComment("");
       }
     }
-  }, [open, record, currentMember, defaultDate]);
+  }
 
   // Create mutation
   const createMutation = useMutation({

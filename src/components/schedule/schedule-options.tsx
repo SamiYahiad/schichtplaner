@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -414,14 +414,15 @@ function BriefingButton({
   const briefing = data?.briefing ?? null;
   const hasBriefing = !!briefing;
 
-  // Sync text when briefing loads or sheet opens
-  useEffect(() => {
-    if (open) {
-      const t = briefing?.text ?? "";
-      setText(t);
-      setInitialText(t);
+  // Sync text when sheet opens
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) {
+      const briefingText = briefing?.text ?? "";
+      setText(briefingText);
+      setInitialText(briefingText);
     }
-  }, [open, briefing]);
+  };
 
   // Auto-resize textarea
   const handleTextChange = useCallback(
@@ -483,7 +484,7 @@ function BriefingButton({
   const isPending = saveMutation.isPending || deleteMutation.isPending;
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button
           variant="outline"

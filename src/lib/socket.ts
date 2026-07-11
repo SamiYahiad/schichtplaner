@@ -10,7 +10,7 @@
  * Falls back to React Query polling when the socket is disconnected.
  */
 
-import { useEffect, useRef, useCallback, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useCallback, useSyncExternalStore } from "react";
 import { io, Socket } from "socket.io-client";
 import { useCurrentMember } from "@/lib/hooks/use-current-member";
 
@@ -195,7 +195,9 @@ export function useSocket() {
 export function useSocketEvent(event: string, handler: (data: unknown) => void) {
   const { subscribe } = useSocket();
   const handlerRef = useRef(handler);
-  handlerRef.current = handler;
+  useLayoutEffect(() => {
+    handlerRef.current = handler;
+  });
 
   useEffect(() => {
     const unsubscribe = subscribe(event, (data: unknown) => {

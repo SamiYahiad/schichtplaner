@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -144,7 +144,9 @@ export function AbsenceForm({
   const categories = categoriesData?.categories ?? [];
 
   // Reset form when dialog opens
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       if (absence) {
         setUserId(absence.userId);
@@ -160,7 +162,7 @@ export function AbsenceForm({
         setNote("");
       }
     }
-  }, [open, absence, currentMember, categories, defaultDateFrom, defaultDateTo]);
+  }
 
   // Create mutation
   const createMutation = useMutation({
