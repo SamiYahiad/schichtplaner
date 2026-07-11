@@ -173,6 +173,7 @@
     "addShiftButton": "Shift",
     "addShiftButtonFull": "Add shift",
     "shiftWord": "{count, plural, one {shift} other {shifts}}",
+    "shift": "Shift",
     "bookedLabel": "booked",
     "jumpToKw": "Jump to:",
     "toastBriefingSaved": "Briefing saved",
