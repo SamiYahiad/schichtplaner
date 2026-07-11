@@ -6,8 +6,10 @@
  * concise weekly briefing.
  */
 
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { generateAIResponse } from "./client";
+import { getResponseLanguageDirective } from "./locale-instruction";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -104,7 +106,8 @@ async function gatherBriefingContext(
   });
 
   if (!schedule) {
-    throw new Error("Schedule nicht gefunden");
+    const t = await getTranslations();
+    throw new Error(t("errors.scheduleNotFound"));
   }
 
   // 2. Aggregate per-day stats
@@ -223,6 +226,7 @@ export async function generateSmartBriefing(
   const ctx = await gatherBriefingContext(scheduleId, orgId);
 
   // 2. Build prompt
+  const languageDirective = await getResponseLanguageDirective();
   const systemPrompt = `Du bist ein Schichtplanungs-Assistent. Erstelle ein kurzes, uebersichtliches Wochen-Briefing fuer Manager.
 
 Formatierung:
@@ -231,7 +235,7 @@ Formatierung:
 - Weise auf Probleme hin (offene Schichten, fehlende Besetzung, viele Abwesenheiten)
 - Gib 1-2 Handlungsempfehlungen wenn noetig
 - Halte es unter 300 Woertern
-- Antworte auf Deutsch`;
+- ${languageDirective}`;
 
   const userMessage = `Erstelle ein Briefing fuer KW ${ctx.weekNumber}/${ctx.year}:
 

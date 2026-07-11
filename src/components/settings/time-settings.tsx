@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -32,6 +33,7 @@ export function TimeSettings({
   onUpdate,
   isSaving,
 }: TimeSettingsProps) {
+  const t = useTranslations();
   function handleTimeSettingsChange(partial: Partial<TimeSettingsData>) {
     onUpdate({
       timeSettings: {
@@ -43,16 +45,16 @@ export function TimeSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Zeiterfassung</h2>
+        <h2 className="text-xl font-semibold">{t("settings.timeTracking")}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Einstellungen fuer die Zeiterfassung
+          {t("settings.timeTrackingDescription")}
         </p>
       </div>
 
       <Card className="p-6 space-y-6">
         {/* Who can use */}
         <div className="space-y-2">
-          <Label>Wer kann Zeiten erfassen?</Label>
+          <Label>{t("settings.whoCanTrackTime")}</Label>
           <Select
             value={timeSettings.whoCanUse}
             onValueChange={(value) =>
@@ -64,8 +66,8 @@ export function TimeSettings({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Alle Mitarbeiter</SelectItem>
-              <SelectItem value="CHOOSE">Auswaehlen</SelectItem>
+              <SelectItem value="ALL">{t("schedule.allEmployees")}</SelectItem>
+              <SelectItem value="CHOOSE">{t("settings.selectSpecific")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -75,10 +77,9 @@ export function TimeSettings({
         {/* Auto-stop */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label>Stoppuhr automatisch stoppen</Label>
+            <Label>{t("settings.autoStopWatch")}</Label>
             <p className="text-xs text-muted-foreground">
-              Die Stoppuhr wird automatisch nach der eingestellten Maximalzeit
-              gestoppt
+              {t("settings.autoStopWatchDescription")}
             </p>
           </div>
           <Switch
@@ -96,9 +97,9 @@ export function TimeSettings({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Warnungen aktivieren</Label>
+              <Label>{t("settings.enableWarnings")}</Label>
               <p className="text-xs text-muted-foreground">
-                Warnung anzeigen wenn Maximalstunden ueberschritten werden
+                {t("settings.warningsDescription")}
               </p>
             </div>
             <Switch
@@ -112,7 +113,7 @@ export function TimeSettings({
 
           {timeSettings.warningsEnabled && (
             <div className="space-y-2 ml-1 pl-4 border-l-2 border-muted">
-              <Label>Maximale Stunden pro Tag</Label>
+              <Label>{t("settings.maxHoursPerDay")}</Label>
               <Input
                 type="number"
                 min={1}
@@ -135,9 +136,9 @@ export function TimeSettings({
         {/* Categories */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label>Kategorien verwenden</Label>
+            <Label>{t("settings.useCategories")}</Label>
             <p className="text-xs text-muted-foreground">
-              Zeiterfassungen koennen einer Kategorie zugewiesen werden
+              {t("settings.useCategoriesDescription")}
             </p>
           </div>
           <Switch

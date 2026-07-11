@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -101,6 +102,7 @@ export function AbsenceSettings({
   onUpdateSettings,
   isSaving,
 }: AbsenceSettingsProps) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -129,12 +131,12 @@ export function AbsenceSettings({
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error || "Fehler beim Erstellen");
+        throw new Error(d.error || t("settings.createError"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Kategorie erstellt");
+      toast.success(t("settings.categoryCreated"));
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       setIsCreating(false);
       setNewName("");
@@ -161,12 +163,12 @@ export function AbsenceSettings({
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error || "Fehler beim Aktualisieren");
+        throw new Error(d.error || t("settings.updateError"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Kategorie aktualisiert");
+      toast.success(t("settings.categoryUpdated"));
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       setEditingId(null);
     },
@@ -183,12 +185,12 @@ export function AbsenceSettings({
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error || "Fehler beim Loeschen");
+        throw new Error(d.error || t("settings.deleteError"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Kategorie geloescht");
+      toast.success(t("settings.categoryDeleted"));
       queryClient.invalidateQueries({ queryKey: ["settings"] });
     },
     onError: (err: Error) => {
@@ -223,7 +225,7 @@ export function AbsenceSettings({
   }
 
   function handleDelete(id: string) {
-    if (confirm("Kategorie wirklich loeschen?")) {
+    if (confirm(t("settings.confirmDeleteCategory"))) {
       deleteMutation.mutate(id);
     }
   }
@@ -231,9 +233,9 @@ export function AbsenceSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Abwesenheiten</h2>
+        <h2 className="text-xl font-semibold">{t("settings.absences")}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Abwesenheitskategorien und Feiertage verwalten
+          {t("settings.absencesDescription")}
         </p>
       </div>
 
@@ -241,7 +243,7 @@ export function AbsenceSettings({
       <Card className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <Label className="text-base font-semibold">
-            Abwesenheitskategorien
+            {t("settings.absenceCategories")}
           </Label>
           {!isCreating && (
             <Button
@@ -250,7 +252,7 @@ export function AbsenceSettings({
               onClick={() => setIsCreating(true)}
             >
               <Plus className="size-3" />
-              Neu
+              {t("settings.new")}
             </Button>
           )}
         </div>
@@ -268,7 +270,7 @@ export function AbsenceSettings({
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   className="flex-1 h-8"
-                  placeholder="Name"
+                  placeholder={t("settings.name")}
                 />
                 <div className="flex items-center gap-2">
                   {COLORS.map((c) => (
@@ -286,7 +288,7 @@ export function AbsenceSettings({
                   ))}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Label className="text-xs">Bezahlt</Label>
+                  <Label className="text-xs">{t("settings.paid")}</Label>
                   <Switch
                     checked={editIsPaid}
                     onCheckedChange={setEditIsPaid}
@@ -301,7 +303,7 @@ export function AbsenceSettings({
                   {updateMutation.isPending ? (
                     <Loader2 className="size-3 animate-spin" />
                   ) : (
-                    "Speichern"
+                    t("common.save")
                   )}
                 </Button>
                 <Button
@@ -309,7 +311,7 @@ export function AbsenceSettings({
                   variant="ghost"
                   onClick={() => setEditingId(null)}
                 >
-                  Abbrechen
+                  {t("common.cancel")}
                 </Button>
               </div>
             ) : (
@@ -324,7 +326,7 @@ export function AbsenceSettings({
                 />
                 <span className="flex-1 text-sm font-medium">{cat.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {cat.isPaid ? "Bezahlt" : "Unbezahlt"}
+                  {cat.isPaid ? t("settings.paid") : t("settings.unpaid")}
                 </span>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
@@ -349,7 +351,7 @@ export function AbsenceSettings({
 
           {categories.length === 0 && !isCreating && (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Noch keine Kategorien erstellt
+              {t("settings.noCategoriesYet")}
             </p>
           )}
         </div>
@@ -361,7 +363,7 @@ export function AbsenceSettings({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               className="flex-1 h-8"
-              placeholder="Kategoriename"
+              placeholder={t("settings.categoryNamePlaceholder")}
               autoFocus
             />
             <div className="flex items-center gap-2">
@@ -380,7 +382,7 @@ export function AbsenceSettings({
               ))}
             </div>
             <div className="flex items-center gap-1.5">
-              <Label className="text-xs">Bezahlt</Label>
+              <Label className="text-xs">{t("settings.paid")}</Label>
               <Switch
                 checked={newIsPaid}
                 onCheckedChange={setNewIsPaid}
@@ -395,7 +397,7 @@ export function AbsenceSettings({
               {createMutation.isPending ? (
                 <Loader2 className="size-3 animate-spin" />
               ) : (
-                "Erstellen"
+                t("common.create")
               )}
             </Button>
             <Button
@@ -403,7 +405,7 @@ export function AbsenceSettings({
               variant="ghost"
               onClick={() => setIsCreating(false)}
             >
-              Abbrechen
+              {t("common.cancel")}
             </Button>
           </div>
         )}
@@ -411,14 +413,14 @@ export function AbsenceSettings({
 
       {/* Holiday location */}
       <Card className="p-6 space-y-4">
-        <Label className="text-base font-semibold">Feiertage</Label>
+        <Label className="text-base font-semibold">{t("settings.holidays")}</Label>
         <p className="text-xs text-muted-foreground -mt-2">
-          Land und Bundesland fuer die automatische Feiertagserkennung
+          {t("settings.holidayLocationDescription")}
         </p>
 
         <div className="grid grid-cols-2 gap-4 max-w-md">
           <div className="space-y-2">
-            <Label>Land</Label>
+            <Label>{t("settings.country")}</Label>
             <Select
               value={country}
               onValueChange={(v) => {
@@ -432,15 +434,15 @@ export function AbsenceSettings({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="DE">Deutschland</SelectItem>
-                <SelectItem value="AT">Oesterreich</SelectItem>
-                <SelectItem value="CH">Schweiz</SelectItem>
+                <SelectItem value="DE">{t("settings.countryGermany")}</SelectItem>
+                <SelectItem value="AT">{t("settings.countryAustria")}</SelectItem>
+                <SelectItem value="CH">{t("settings.countrySwitzerland")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Bundesland</Label>
+            <Label>{t("settings.state")}</Label>
             <Select
               value={state}
               onValueChange={(v) => {
@@ -450,7 +452,7 @@ export function AbsenceSettings({
               disabled={isSaving || states.length === 0}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Waehlen..." />
+                <SelectValue placeholder={t("settings.choose")} />
               </SelectTrigger>
               <SelectContent>
                 {states.map((s) => (

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Layers, Loader2, UserPlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -47,6 +48,7 @@ type Employee = {
 };
 
 export function DivisionList() {
+  const t = useTranslations();
   const { data: currentMember } = useCurrentMember();
   const queryClient = useQueryClient();
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -65,7 +67,7 @@ export function DivisionList() {
     queryKey: ["divisions"],
     queryFn: async () => {
       const res = await fetch("/api/divisions");
-      if (!res.ok) throw new Error("Fehler beim Laden der Arbeitsbereiche");
+      if (!res.ok) throw new Error(t("divisions.errorLoad"));
       return res.json();
     },
   });
@@ -75,7 +77,7 @@ export function DivisionList() {
     queryKey: ["employees", "all"],
     queryFn: async () => {
       const res = await fetch("/api/employees?status=all");
-      if (!res.ok) throw new Error("Fehler beim Laden");
+      if (!res.ok) throw new Error(t("common.errorLoading"));
       return res.json();
     },
     enabled: assignDialogOpen,
@@ -97,12 +99,12 @@ export function DivisionList() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Zuweisen");
+        throw new Error(data.error || t("divisions.errorAssign"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Mitarbeiter wurde zugewiesen");
+      toast.success(t("divisions.toastMemberAssigned"));
       queryClient.invalidateQueries({ queryKey: ["divisions"] });
       queryClient.invalidateQueries({
         queryKey: ["division-members", assignDivisionId],
@@ -140,9 +142,9 @@ export function DivisionList() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Arbeitsbereiche</h1>
+          <h1 className="text-2xl font-bold">{t("divisions.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Organisiere dein Team in Arbeitsbereiche
+            {t("divisions.subtitle")}
           </p>
         </div>
         {isAdmin && <DivisionForm />}
@@ -151,7 +153,7 @@ export function DivisionList() {
       {/* Error */}
       {error && (
         <Card className="p-6 text-center text-destructive">
-          Fehler beim Laden der Arbeitsbereiche. Bitte versuche es erneut.
+          {t("divisions.errorLoadRetry")}
         </Card>
       )}
 
@@ -163,10 +165,10 @@ export function DivisionList() {
         <Card className="flex flex-col items-center justify-center p-12 text-center">
           <Layers className="size-12 text-muted-foreground/50 mb-3" />
           <p className="text-lg font-medium">
-            Keine Arbeitsbereiche vorhanden
+            {t("divisions.noDivisions")}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            Erstelle deinen ersten Arbeitsbereich.
+            {t("divisions.createFirstDivision")}
           </p>
         </Card>
       )}
@@ -187,7 +189,7 @@ export function DivisionList() {
                     onClick={() => openAssignDialog(division.id)}
                   >
                     <UserPlus className="size-3.5" />
-                    Mitarbeiter zuweisen
+                    {t("divisions.assignEmployee")}
                   </Button>
                 </div>
               )}
@@ -201,10 +203,11 @@ export function DivisionList() {
         <DialogContent className="sm:max-w-md">
           <form onSubmit={handleAssign}>
             <DialogHeader>
-              <DialogTitle>Mitarbeiter zuweisen</DialogTitle>
+              <DialogTitle>{t("divisions.assignEmployee")}</DialogTitle>
               <DialogDescription>
-                Weise einen Mitarbeiter dem Arbeitsbereich{" "}
-                &quot;{assignDivision?.title}&quot; zu.
+                {t("divisions.assignEmployeeDescription", {
+                  title: assignDivision?.title ?? "",
+                })}
               </DialogDescription>
             </DialogHeader>
 
@@ -214,7 +217,7 @@ export function DivisionList() {
                 onValueChange={setSelectedUserId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Mitarbeiter waehlen..." />
+                  <SelectValue placeholder={t("employees.selectEmployeePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {employeesData?.members?.map((emp) => (
@@ -233,7 +236,7 @@ export function DivisionList() {
                 variant="outline"
                 onClick={() => setAssignDialogOpen(false)}
               >
-                Abbrechen
+                {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
@@ -242,7 +245,7 @@ export function DivisionList() {
                 {assignMutation.isPending && (
                   <Loader2 className="size-4 animate-spin" />
                 )}
-                Zuweisen
+                {t("divisions.assign")}
               </Button>
             </DialogFooter>
           </form>

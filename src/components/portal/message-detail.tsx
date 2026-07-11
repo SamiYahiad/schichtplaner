@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { getDateFnsLocale } from "@/i18n/date-fns-locale";
 import {
   ArrowLeft,
   Reply,
@@ -51,6 +52,8 @@ interface MessageFull {
 
 export function MessageDetail() {
   const router = useRouter();
+  const t = useTranslations();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const messageId = searchParams.get("id");
   const queryClient = useQueryClient();
@@ -75,7 +78,7 @@ export function MessageDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages"] });
-      toast.success("Antwort gesendet");
+      toast.success(t("portal.replySent"));
       setReplyText("");
       setReplyOpen(false);
     },
@@ -93,7 +96,7 @@ export function MessageDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages"] });
-      toast.success("In den Papierkorb verschoben");
+      toast.success(t("portal.movedToTrash"));
       router.push("/portal/inbox");
     },
   });
@@ -115,9 +118,9 @@ export function MessageDetail() {
       <div className="flex-1">
         <Button variant="ghost" onClick={() => router.push("/portal/inbox")} className="gap-2 mb-4">
           <ArrowLeft className="size-4" />
-          Zurueck
+          {t("common.back")}
         </Button>
-        <p className="text-slate-500">Nachricht nicht gefunden.</p>
+        <p className="text-slate-500">{t("portal.messageNotFound")}</p>
       </div>
     );
   }
@@ -131,7 +134,7 @@ export function MessageDetail() {
       {/* Back button */}
       <Button variant="ghost" onClick={() => router.push("/portal/inbox")} className="gap-2 mb-4">
         <ArrowLeft className="size-4" />
-        Zurueck
+        {t("common.back")}
       </Button>
 
       <div className="rounded-lg border bg-white p-6 dark:bg-slate-900 dark:border-slate-800">
@@ -151,13 +154,12 @@ export function MessageDetail() {
                 {msg.sender.firstName} {msg.sender.lastName}
               </span>
               <time className="text-xs text-slate-400">
-                {format(new Date(msg.createdAt), "dd. MMMM yyyy, HH:mm", { locale: de })}
+                {format(new Date(msg.createdAt), "dd. MMMM yyyy, HH:mm", { locale: getDateFnsLocale(locale) })}
               </time>
             </div>
             <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
               <User className="size-3" />
-              An:{" "}
-              {msg.recipients.map((r) => `${r.user.firstName} ${r.user.lastName}`).join(", ")}
+              {t("portal.to", { names: msg.recipients.map((r) => `${r.user.firstName} ${r.user.lastName}`).join(", ") })}
             </div>
           </div>
         </div>
@@ -172,7 +174,7 @@ export function MessageDetail() {
           <>
             <Separator className="my-6" />
             <h3 className="mb-4 text-sm font-semibold text-slate-500">
-              Antworten ({msg.replies.length})
+              {t("portal.repliesCount", { count: msg.replies.length })}
             </h3>
             <div className="space-y-4">
               {msg.replies.map((reply) => (
@@ -187,7 +189,7 @@ export function MessageDetail() {
                       {reply.sender.firstName} {reply.sender.lastName}
                     </span>
                     <time className="text-xs text-slate-400">
-                      {format(new Date(reply.createdAt), "dd. MMM yyyy, HH:mm", { locale: de })}
+                      {format(new Date(reply.createdAt), "dd. MMM yyyy, HH:mm", { locale: getDateFnsLocale(locale) })}
                     </time>
                   </div>
                   <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
@@ -204,7 +206,7 @@ export function MessageDetail() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setReplyOpen(!replyOpen)} className="gap-2">
             <Reply className="size-4" />
-            Antworten
+            {t("portal.reply")}
           </Button>
           <Button
             variant="outline"
@@ -212,7 +214,7 @@ export function MessageDetail() {
             onClick={() => trashMutation.mutate()}
           >
             <Trash2 className="size-4" />
-            Loeschen
+            {t("common.delete")}
           </Button>
         </div>
 
@@ -222,7 +224,7 @@ export function MessageDetail() {
             <Textarea
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Antwort schreiben..."
+              placeholder={t("portal.writeReplyPlaceholder")}
               className="min-h-[100px]"
             />
             <div className="flex justify-end gap-2">
@@ -233,7 +235,7 @@ export function MessageDetail() {
                   setReplyText("");
                 }}
               >
-                Abbrechen
+                {t("common.cancel")}
               </Button>
               <Button
                 onClick={() => replyMutation.mutate()}
@@ -241,7 +243,7 @@ export function MessageDetail() {
                 className="gap-2"
               >
                 <Send className="size-4" />
-                {replyMutation.isPending ? "Sende..." : "Antwort senden"}
+                {replyMutation.isPending ? t("portal.sending") : t("portal.sendReply")}
               </Button>
             </div>
           </div>

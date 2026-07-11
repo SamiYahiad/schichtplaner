@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Clock, Loader2, Pause, Plus, Users, X } from "lucide-react";
@@ -44,6 +45,7 @@ export function ShiftCard({
   showPauses = true,
   userWishRequest,
 }: ShiftCardProps) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const bookedCount = shift.bookings.length;
   const isFull = bookedCount >= shift.maxEmployees;
@@ -59,8 +61,8 @@ export function ShiftCard({
   const hasPause = shift.pauseValue > 0;
   const pauseLabel =
     shift.pauseOption === "PER_HOUR"
-      ? `${shift.pauseValue} Min/Std`
-      : `${shift.pauseValue} Min/Schicht`;
+      ? t("schedule.pausePerHour", { value: shift.pauseValue })
+      : t("schedule.pausePerShift", { value: shift.pauseValue });
 
   // Book mutation
   const bookMutation = useMutation({
@@ -72,12 +74,12 @@ export function ShiftCard({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Buchen");
+        throw new Error(data.error || t("schedule.errorBooking"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Mitarbeiter gebucht");
+      toast.success(t("schedule.toastBooked"));
       queryClient.invalidateQueries({ queryKey: ["schedule"] });
     },
     onError: (error: Error) => {
@@ -95,12 +97,12 @@ export function ShiftCard({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Abbuchen");
+        throw new Error(data.error || t("schedule.errorUnbooking"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Mitarbeiter abgebucht");
+      toast.success(t("schedule.toastUnbooked"));
       queryClient.invalidateQueries({ queryKey: ["schedule"] });
     },
     onError: (error: Error) => {
@@ -116,12 +118,12 @@ export function ShiftCard({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Hinzufuegen");
+        throw new Error(data.error || t("schedule.errorAddingPlace"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Platz hinzugefuegt");
+      toast.success(t("schedule.toastPlaceAdded"));
       queryClient.invalidateQueries({ queryKey: ["schedule"] });
     },
     onError: (error: Error) => {
@@ -130,7 +132,7 @@ export function ShiftCard({
   });
 
   function handleUnbook(userId: string, name: string) {
-    if (confirm(`${name} wirklich aus der Schicht entfernen?`)) {
+    if (confirm(t("schedule.confirmRemoveEmployee", { name }))) {
       unbookMutation.mutate(userId);
     }
   }
@@ -257,7 +259,7 @@ export function ShiftCard({
                 <button
                   type="button"
                   className="opacity-0 group-hover/slot:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                  title="Abbuchen"
+                  title={t("schedule.unbook")}
                   onClick={() =>
                     handleUnbook(
                       booking.userId,
@@ -293,7 +295,7 @@ export function ShiftCard({
                     <Plus className="size-3 text-muted-foreground/50" />
                   </div>
                   <span className="text-xs text-muted-foreground/50 italic hover:text-muted-foreground transition-colors">
-                    Mitarbeiter zuweisen
+                    {t("schedule.assignEmployee")}
                   </span>
                 </button>
               </EmployeePicker>
@@ -307,7 +309,7 @@ export function ShiftCard({
                   <Plus className="size-3 text-primary/60" />
                 </div>
                 <span className="text-xs text-primary/70 italic">
-                  Eintragen
+                  {t("schedule.selfBook")}
                 </span>
               </button>
             ) : (
@@ -316,7 +318,7 @@ export function ShiftCard({
                   <span className="text-[9px] text-muted-foreground/50">?</span>
                 </div>
                 <span className="text-xs text-muted-foreground/50 italic">
-                  Frei
+                  {t("schedule.slotFree")}
                 </span>
               </div>
             )}
@@ -331,7 +333,7 @@ export function ShiftCard({
             onClick={() => addPlaceMutation.mutate()}
           >
             <Plus className="size-3" />
-            Platz
+            {t("schedule.place")}
           </button>
         )}
       </div>

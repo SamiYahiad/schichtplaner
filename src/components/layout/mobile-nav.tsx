@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Menu, CalendarDays, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { navItems } from "./top-nav";
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const t = useTranslations();
 
   function isActive(href: string) {
     const segment = "/" + href.split("/")[1];
@@ -29,7 +31,7 @@ export function MobileNav() {
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="size-5" />
-          <span className="sr-only">Navigation</span>
+          <span className="sr-only">{t("common.navigation")}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-72 p-0">
@@ -56,7 +58,7 @@ export function MobileNav() {
                 )}
               >
                 <Icon className="size-5" />
-                {item.label}
+                {t(`nav.${item.key}`)}
               </Link>
             );
           })}
@@ -72,7 +74,7 @@ export function MobileNav() {
             )}
           >
             <Sparkles className="size-5" />
-            KI-Assistent
+            {t("nav.ai")}
           </Link>
         </nav>
       </SheetContent>

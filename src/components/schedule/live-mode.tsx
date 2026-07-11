@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -19,7 +20,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useSocket, useSocketEvent } from "@/lib/socket";
-import { dayNames } from "@/lib/utils/calendar";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,6 +75,7 @@ interface LiveModeProps {
 // ---------------------------------------------------------------------------
 
 export function LiveMode({ scheduleId, isManager }: LiveModeProps) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const { joinSchedule, leaveSchedule } = useSocket();
   const [expanded, setExpanded] = useState(false);
@@ -92,7 +93,7 @@ export function LiveMode({ scheduleId, isManager }: LiveModeProps) {
     queryKey: ["live-session", scheduleId],
     queryFn: async () => {
       const res = await fetch(`/api/live?scheduleId=${scheduleId}`);
-      if (!res.ok) throw new Error("Fehler beim Laden der Live-Session");
+      if (!res.ok) throw new Error(t("schedule.errorLoadingLiveSession"));
       return res.json();
     },
     enabled: !!scheduleId,
@@ -122,12 +123,12 @@ export function LiveMode({ scheduleId, isManager }: LiveModeProps) {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Starten");
+        throw new Error(data.error || t("schedule.errorStarting"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Live-Modus gestartet");
+      toast.success(t("schedule.toastLiveStarted"));
       queryClient.invalidateQueries({ queryKey: ["live-session", scheduleId] });
       setExpanded(true);
     },
@@ -145,12 +146,12 @@ export function LiveMode({ scheduleId, isManager }: LiveModeProps) {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Stoppen");
+        throw new Error(data.error || t("schedule.errorStopping"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Live-Modus gestoppt");
+      toast.success(t("schedule.toastLiveStopped"));
       queryClient.invalidateQueries({ queryKey: ["live-session", scheduleId] });
       setExpanded(false);
     },
@@ -184,7 +185,7 @@ export function LiveMode({ scheduleId, isManager }: LiveModeProps) {
                 ) : (
                   <Radio className="size-3.5" />
                 )}
-                Live starten
+                {t("schedule.startLive")}
               </Button>
             ) : (
               <Button
@@ -192,7 +193,7 @@ export function LiveMode({ scheduleId, isManager }: LiveModeProps) {
                 size="sm"
                 className="gap-1.5 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
                 onClick={() => {
-                  if (confirm("Live-Modus wirklich stoppen?")) {
+                  if (confirm(t("schedule.confirmStopLive"))) {
                     stopMutation.mutate();
                   }
                 }}
@@ -203,7 +204,7 @@ export function LiveMode({ scheduleId, isManager }: LiveModeProps) {
                 ) : (
                   <Square className="size-3.5" />
                 )}
-                Live stoppen
+                {t("schedule.stopLive")}
               </Button>
             )}
           </>
@@ -260,6 +261,7 @@ function LivePanel({
   isManager: boolean;
   scheduleId: string;
 }) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
 
   return (
@@ -280,7 +282,7 @@ function LivePanel({
       {!isManager && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground font-medium">
-            Offen:
+            {t("schedule.openLabel")}
           </span>
           {session.days.map((day) => (
             <Badge
@@ -293,7 +295,7 @@ function LivePanel({
                   : "opacity-50"
               )}
             >
-              {dayNames[day.dayOfWeek - 1]}
+              {t.raw("schedule.dayNamesShort")[day.dayOfWeek - 1]}
             </Badge>
           ))}
         </div>
@@ -310,6 +312,7 @@ function LivePanel({
 // ---------------------------------------------------------------------------
 
 function LiveTimer({ startedAt }: { startedAt: string }) {
+  const t = useTranslations();
   const [elapsed, setElapsed] = useState("");
 
   useEffect(() => {
@@ -337,7 +340,7 @@ function LiveTimer({ startedAt }: { startedAt: string }) {
     <div className="flex items-center gap-2 text-sm text-purple-700">
       <Clock className="size-4" />
       <span className="font-mono font-medium">{elapsed}</span>
-      <span className="text-xs text-muted-foreground">aktiv</span>
+      <span className="text-xs text-muted-foreground">{t("schedule.activeLabel")}</span>
     </div>
   );
 }
@@ -355,6 +358,7 @@ function DayToggles({
   days: LiveDayData[];
   scheduleId: string;
 }) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
 
   const toggleMutation = useMutation({
@@ -374,7 +378,7 @@ function DayToggles({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Aendern");
+        throw new Error(data.error || t("schedule.errorChanging"));
       }
       return res.json();
     },
@@ -389,7 +393,7 @@ function DayToggles({
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-purple-700">
-        Tage fuer Self-Booking:
+        {t("schedule.selfBookingDaysLabel")}
       </p>
       <div className="flex items-center gap-3 flex-wrap">
         {days.map((day) => (
@@ -406,7 +410,7 @@ function DayToggles({
               disabled={toggleMutation.isPending}
             />
             <Label className="text-xs cursor-pointer">
-              {dayNames[day.dayOfWeek - 1]}
+              {t.raw("schedule.dayNamesShort")[day.dayOfWeek - 1]}
             </Label>
           </div>
         ))}
@@ -420,17 +424,20 @@ function DayToggles({
 // ---------------------------------------------------------------------------
 
 function LiveLogFeed({ logs }: { logs: LiveLogData[] }) {
+  const t = useTranslations();
+  const locale = useLocale();
+
   if (logs.length === 0) {
     return (
       <div className="text-xs text-muted-foreground text-center py-2">
-        Noch keine Aktivitaet
+        {t("schedule.noActivityYet")}
       </div>
     );
   }
 
   return (
     <div className="space-y-1.5 max-h-48 overflow-y-auto">
-      <p className="text-xs font-medium text-purple-700">Aktivitaet:</p>
+      <p className="text-xs font-medium text-purple-700">{t("schedule.activityLabel")}</p>
       {logs.map((log) => (
         <div
           key={log.id}
@@ -445,10 +452,10 @@ function LiveLogFeed({ logs }: { logs: LiveLogData[] }) {
             {log.user.firstName} {log.user.lastName}
           </span>
           <span className="text-muted-foreground">
-            {log.action === "BOOK" ? "eingetragen" : "ausgetragen"}
+            {log.action === "BOOK" ? t("schedule.bookedPast") : t("schedule.unbookedPast")}
           </span>
           <span className="ml-auto text-muted-foreground shrink-0">
-            {formatTime(log.loggedAt)}
+            {formatTime(log.loggedAt, locale)}
           </span>
         </div>
       ))}
@@ -460,9 +467,9 @@ function LiveLogFeed({ logs }: { logs: LiveLogData[] }) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatTime(iso: string): string {
+function formatTime(iso: string, locale: string): string {
   const d = new Date(iso);
-  return d.toLocaleTimeString("de-DE", {
+  return d.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
   });

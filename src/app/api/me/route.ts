@@ -1,11 +1,13 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 
 export async function GET() {
+  const t = await getTranslations();
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const member = await db.organizationMember.findFirst({
@@ -27,7 +29,7 @@ export async function GET() {
   });
 
   if (!member) {
-    return NextResponse.json({ error: "No membership found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.noMembershipFound") }, { status: 404 });
   }
 
   return NextResponse.json({

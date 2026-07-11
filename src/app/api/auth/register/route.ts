@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -22,11 +23,12 @@ export async function POST(req: Request) {
   }
 
   const { email, password, firstName, lastName, companyName } = parsed.data;
+  const t = await getTranslations("errors");
 
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) {
     return NextResponse.json(
-      { error: "Email already exists" },
+      { error: t("emailAlreadyExists") },
       { status: 409 }
     );
   }
@@ -51,8 +53,8 @@ export async function POST(req: Request) {
         },
         divisions: {
           create: {
-            title: "Alle",
-            description: "Standard-Arbeitsbereich",
+            title: t("defaultDivisionTitle"),
+            description: t("defaultDivisionDescription"),
             isSystem: true,
           },
         },

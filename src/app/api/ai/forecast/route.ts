@@ -9,19 +9,21 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import { isAIFeatureEnabled } from "@/lib/ai/client";
 import { generateForecast } from "@/lib/ai/forecast";
 
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
     return NextResponse.json(
-      { error: "Nur Manager koennen Prognosen einsehen" },
+      { error: t("errors.managersOnlyForecast") },
       { status: 403 }
     );
   }
@@ -33,7 +35,7 @@ export async function GET(request: NextRequest) {
   );
   if (!enabled) {
     return NextResponse.json(
-      { error: "Prognose-Feature ist fuer diese Organisation deaktiviert" },
+      { error: t("errors.forecastDisabled") },
       { status: 403 }
     );
   }
@@ -50,9 +52,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[AI Forecast] Error:", error);
     const message =
-      error instanceof Error ? error.message : "Unbekannter Fehler";
+      error instanceof Error ? error.message : t("errors.unknownError");
     return NextResponse.json(
-      { error: `Prognose konnte nicht erstellt werden: ${message}` },
+      { error: t("errors.forecastGenerationFailed", { message }) },
       { status: 500 }
     );
   }

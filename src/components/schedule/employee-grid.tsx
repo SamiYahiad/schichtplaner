@@ -2,10 +2,11 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { isToday } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { dayNames, formatDateShort } from "@/lib/utils/calendar";
+import { formatDateShort } from "@/lib/utils/calendar";
 import { cn } from "@/lib/utils";
 import type { ScheduleData, ShiftData, BookingUser } from "@/types/schedule";
 
@@ -49,11 +50,13 @@ function shiftDurationHours(shift: ShiftData): number {
  * Each cell shows the employee's shift(s) for that day.
  */
 export function EmployeeGrid({ weekNumber, year, weekDates }: EmployeeGridProps) {
+  const t = useTranslations();
+  const dayNames = t.raw("schedule.dayNamesShort") as string[];
   const { data, isLoading } = useQuery<{ schedule: ScheduleData }>({
     queryKey: ["schedule", weekNumber, year],
     queryFn: async () => {
       const res = await fetch(`/api/schedules?kw=${weekNumber}&year=${year}`);
-      if (!res.ok) throw new Error("Fehler beim Laden der Schichten");
+      if (!res.ok) throw new Error(t("schedule.errorLoadingSchedule"));
       return res.json();
     },
   });
@@ -92,7 +95,7 @@ export function EmployeeGrid({ weekNumber, year, weekDates }: EmployeeGridProps)
   if (employees.length === 0) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
-        Keine gebuchten Mitarbeiter in dieser Woche
+        {t("schedule.noBookedEmployeesWeek")}
       </div>
     );
   }
@@ -103,7 +106,7 @@ export function EmployeeGrid({ weekNumber, year, weekDates }: EmployeeGridProps)
         <thead>
           <tr className="bg-muted/30">
             <th className="border-r px-3 py-2 text-left text-xs font-semibold text-muted-foreground w-44">
-              Mitarbeiter
+              {t("time.employee")}
             </th>
             {weekDates.map((date, idx) => {
               const today = isToday(date);
@@ -123,7 +126,7 @@ export function EmployeeGrid({ weekNumber, year, weekDates }: EmployeeGridProps)
               );
             })}
             <th className="px-3 py-2 text-center text-xs font-semibold text-muted-foreground w-20">
-              Stunden
+              {t("time.hours")}
             </th>
           </tr>
         </thead>

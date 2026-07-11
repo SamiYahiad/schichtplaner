@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import { emitToSchedule } from "@/lib/emit";
@@ -11,9 +12,10 @@ import { emitToSchedule } from "@/lib/emit";
  * Also supports ?shiftId=xxx to filter by shift.
  */
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { searchParams } = request.nextUrl;
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   if (!scheduleId && !shiftId) {
     return NextResponse.json(
-      { error: "scheduleId or shiftId query parameter required" },
+      { error: t("errors.scheduleOrShiftIdRequired") },
       { status: 400 }
     );
   }
@@ -86,22 +88,23 @@ const createSchema = z.object({
  * Employees can request specific shifts they want to work.
  */
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -119,7 +122,7 @@ export async function POST(request: NextRequest) {
 
   if (!shift || shift.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Schicht nicht gefunden" },
+      { error: t("errors.shiftNotFound") },
       { status: 404 }
     );
   }
@@ -131,7 +134,7 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     return NextResponse.json(
-      { error: "Wunsch fuer diese Schicht bereits vorhanden" },
+      { error: t("errors.modRequestAlreadyExists") },
       { status: 409 }
     );
   }
@@ -143,7 +146,7 @@ export async function POST(request: NextRequest) {
 
   if (existingBooking) {
     return NextResponse.json(
-      { error: "Bereits in dieser Schicht gebucht" },
+      { error: t("errors.alreadyBookedInShift") },
       { status: 409 }
     );
   }

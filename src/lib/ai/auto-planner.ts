@@ -5,8 +5,10 @@
  * and asks Claude for optimal shift assignment suggestions.
  */
 
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { generateAIResponse } from "./client";
+import { getResponseLanguageDirective } from "./locale-instruction";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -71,7 +73,10 @@ async function gatherContext(
     },
   });
 
-  if (!schedule) throw new Error("Schedule nicht gefunden");
+  if (!schedule) {
+    const t = await getTranslations();
+    throw new Error(t("errors.scheduleNotFound"));
+  }
 
   // 2. Get all active employees in the org with their divisions
   const members = await db.organizationMember.findMany({
@@ -291,7 +296,10 @@ function getWeekStartDate(weekNumber: number, year: number): Date {
 
 // ─── Prompt builder ─────────────────────────────────────────────────
 
-function buildPrompt(ctx: PlanningContext): { system: string; user: string } {
+function buildPrompt(
+  ctx: PlanningContext,
+  languageDirective: string
+): { system: string; user: string } {
   const system = `Du bist ein KI-Assistent fuer Schichtplanung. Deine Aufgabe ist es, optimale Schichtzuweisungen vorzuschlagen.
 
 Regeln:
@@ -307,7 +315,7 @@ Jedes Element hat diese Felder:
 - shiftId: string (die Schicht-ID)
 - employeeId: string (die Mitarbeiter-ID)
 - score: number (0-100, wie gut die Zuweisung passt)
-- reason: string (kurze Begruendung auf Deutsch, max 80 Zeichen)
+- reason: string (kurze Begruendung, max 80 Zeichen; ${languageDirective})
 
 Wenn eine Schicht bereits voll besetzt ist (currentBookings.length >= maxEmployees), ueberspringe sie.`;
 
@@ -361,7 +369,8 @@ export async function generateScheduleSuggestion(
   const promptCtx = { ...ctx, shifts: openShifts };
 
   // 2. Build the prompt
-  const { system, user } = buildPrompt(promptCtx);
+  const languageDirective = await getResponseLanguageDirective();
+  const { system, user } = buildPrompt(promptCtx, languageDirective);
 
   // 3. Call Claude
   const response = await generateAIResponse({

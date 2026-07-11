@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -50,11 +51,11 @@ type FilterTab = "all" | "pending" | "approved" | "declined";
 
 // ---------- Helpers ----------
 
-const tabs: { key: FilterTab; label: string }[] = [
-  { key: "all", label: "Alle" },
-  { key: "pending", label: "Ausstehend" },
-  { key: "approved", label: "Genehmigt" },
-  { key: "declined", label: "Abgelehnt" },
+const tabs: { key: FilterTab; labelKey: string }[] = [
+  { key: "all", labelKey: "common.all" },
+  { key: "pending", labelKey: "employees.statusPending" },
+  { key: "approved", labelKey: "employees.statusApproved" },
+  { key: "declined", labelKey: "employees.statusDeclined" },
 ];
 
 function getInitials(firstName: string, lastName: string) {
@@ -73,6 +74,7 @@ function formatDateRange(from: string, to: string): string {
 // ---------- Component ----------
 
 export function AbsenceList() {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const { data: currentMember } = useCurrentMember();
   const isAdmin =
@@ -94,7 +96,7 @@ export function AbsenceList() {
     queryKey: ["absences", activeTab],
     queryFn: async () => {
       const res = await fetch(`/api/absences?${queryParams.toString()}`);
-      if (!res.ok) throw new Error("Fehler beim Laden der Abwesenheiten");
+      if (!res.ok) throw new Error(t("employees.errorLoadAbsences"));
       return res.json();
     },
   });
@@ -141,12 +143,12 @@ export function AbsenceList() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error || "Fehler beim Genehmigen");
+        throw new Error(d.error || t("employees.errorApprove"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Abwesenheit genehmigt");
+      toast.success(t("employees.toastApproved"));
       queryClient.invalidateQueries({ queryKey: ["absences"] });
     },
     onError: (err: Error) => toast.error(err.message),
@@ -162,12 +164,12 @@ export function AbsenceList() {
       });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error || "Fehler beim Ablehnen");
+        throw new Error(d.error || t("employees.errorDecline"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Abwesenheit abgelehnt");
+      toast.success(t("employees.toastDeclined"));
       queryClient.invalidateQueries({ queryKey: ["absences"] });
     },
     onError: (err: Error) => toast.error(err.message),
@@ -179,19 +181,19 @@ export function AbsenceList() {
       const res = await fetch(`/api/absences/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const d = await res.json();
-        throw new Error(d.error || "Fehler beim Loeschen");
+        throw new Error(d.error || t("employees.errorDelete"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Abwesenheit geloescht");
+      toast.success(t("employees.toastDeleted"));
       queryClient.invalidateQueries({ queryKey: ["absences"] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
 
   function handleDelete(id: string) {
-    if (confirm("Abwesenheit wirklich loeschen?")) {
+    if (confirm(t("employees.confirmDeleteAbsence"))) {
       deleteMutation.mutate(id);
     }
   }
@@ -206,9 +208,9 @@ export function AbsenceList() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Abwesenheiten</h1>
+          <h1 className="text-2xl font-bold">{t("employees.absences")}</h1>
           <p className="text-sm text-muted-foreground">
-            Abwesenheitsanfragen verwalten und genehmigen
+            {t("employees.absencesSubtitle")}
           </p>
         </div>
         <Button
@@ -219,7 +221,7 @@ export function AbsenceList() {
           }}
         >
           <Plus className="size-4" />
-          Abwesenheit beantragen
+          {t("employees.requestAbsence")}
         </Button>
       </div>
 
@@ -230,7 +232,7 @@ export function AbsenceList() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Suche nach Name oder Kategorie..."
+            placeholder={t("employees.searchAbsencePlaceholder")}
             className="pl-9"
           />
         </div>
@@ -262,7 +264,7 @@ export function AbsenceList() {
                 {tab.key === "all" && (
                   <Filter className="size-3.5" />
                 )}
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="hidden sm:inline">{t(tab.labelKey)}</span>
                 <span className="tabular-nums text-xs opacity-70">
                   ({count})
                 </span>
@@ -275,7 +277,7 @@ export function AbsenceList() {
       {/* Error */}
       {error && (
         <Card className="p-6 text-center text-destructive">
-          Fehler beim Laden der Abwesenheiten. Bitte versuche es erneut.
+          {t("employees.errorLoadAbsencesRetry")}
         </Card>
       )}
 
@@ -286,11 +288,11 @@ export function AbsenceList() {
       {!isLoading && !error && filteredAbsences.length === 0 && (
         <Card className="flex flex-col items-center justify-center p-12 text-center">
           <CalendarDays className="size-12 text-muted-foreground/50 mb-3" />
-          <p className="text-lg font-medium">Keine Abwesenheiten</p>
+          <p className="text-lg font-medium">{t("employees.noAbsences")}</p>
           <p className="text-sm text-muted-foreground mt-1">
             {search
-              ? "Keine Ergebnisse fuer die Suche."
-              : "Noch keine Abwesenheitsanfragen vorhanden."}
+              ? t("employees.noSearchResults")
+              : t("employees.noAbsenceRequests")}
           </p>
         </Card>
       )}
@@ -302,12 +304,12 @@ export function AbsenceList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Mitarbeiter</TableHead>
-                  <TableHead>Kategorie</TableHead>
-                  <TableHead>Zeitraum</TableHead>
-                  <TableHead className="text-center">Tage</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aktionen</TableHead>
+                  <TableHead>{t("employees.employee")}</TableHead>
+                  <TableHead>{t("employees.category")}</TableHead>
+                  <TableHead>{t("employees.dateRange")}</TableHead>
+                  <TableHead className="text-center">{t("employees.days")}</TableHead>
+                  <TableHead>{t("employees.status")}</TableHead>
+                  <TableHead className="text-right">{t("employees.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -350,7 +352,7 @@ export function AbsenceList() {
                       <TableCell className="text-center tabular-nums">
                         {days}
                       </TableCell>
-                      <TableCell>{getStatusBadge(absence.status)}</TableCell>
+                      <TableCell>{getStatusBadge(absence.status, t)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center gap-1 justify-end">
                           {/* Quick approve/decline for admins on pending */}
@@ -361,7 +363,7 @@ export function AbsenceList() {
                                 size="icon-xs"
                                 onClick={() => approveMutation.mutate(absence.id)}
                                 disabled={approveMutation.isPending}
-                                title="Genehmigen"
+                                title={t("employees.approve")}
                               >
                                 <Check className="size-3.5 text-green-500" />
                               </Button>
@@ -370,7 +372,7 @@ export function AbsenceList() {
                                 size="icon-xs"
                                 onClick={() => declineMutation.mutate(absence.id)}
                                 disabled={declineMutation.isPending}
-                                title="Ablehnen"
+                                title={t("employees.decline")}
                               >
                                 <X className="size-3.5 text-red-500" />
                               </Button>
@@ -380,7 +382,7 @@ export function AbsenceList() {
                             variant="ghost"
                             size="icon-xs"
                             onClick={() => handleEdit(absence)}
-                            title="Bearbeiten"
+                            title={t("common.edit")}
                           >
                             <Pencil className="size-3" />
                           </Button>
@@ -390,7 +392,7 @@ export function AbsenceList() {
                               size="icon-xs"
                               onClick={() => handleDelete(absence.id)}
                               disabled={deleteMutation.isPending}
-                              title="Loeschen"
+                              title={t("common.delete")}
                             >
                               <Trash2 className="size-3 text-destructive" />
                             </Button>
@@ -440,13 +442,13 @@ export function AbsenceList() {
                         </div>
                       </div>
                     </div>
-                    {getStatusBadge(absence.status)}
+                    {getStatusBadge(absence.status, t)}
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <div className="text-sm text-muted-foreground tabular-nums">
                       {formatDateRange(absence.dateFrom, absence.dateTo)}
                       <span className="ml-2">
-                        ({days} Tag{days !== 1 ? "e" : ""})
+                        ({t("employees.daysCount", { days })})
                       </span>
                     </div>
                     <div className="flex items-center gap-1">

@@ -5,6 +5,7 @@
  * Checks for: long shifts, gaps, overlaps, and soll/ist deviation.
  */
 
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import {
   startOfMonth,
@@ -62,9 +63,9 @@ function timesOverlap(
   bFrom: string,
   bTo: string
 ): boolean {
-  let aStart = toMinutes(aFrom);
+  const aStart = toMinutes(aFrom);
   let aEnd = toMinutes(aTo);
-  let bStart = toMinutes(bFrom);
+  const bStart = toMinutes(bFrom);
   let bEnd = toMinutes(bTo);
 
   if (aEnd <= aStart) aEnd += 24 * 60;
@@ -103,6 +104,7 @@ export async function detectAnomalies(
   const monthStart = startOfMonth(parsedMonth);
   const monthEnd = endOfMonth(parsedMonth);
 
+  const t = await getTranslations();
   const anomalies: Anomaly[] = [];
 
   // 1. Get all active org members
@@ -156,9 +158,14 @@ export async function detectAnomalies(
         type: "long_shift",
         severity: hours > 12 ? "critical" : "warning",
         employeeId: record.userId,
-        employeeName: userNameMap.get(record.userId) ?? "Unbekannt",
+        employeeName: userNameMap.get(record.userId) ?? t("portal.unknownUser"),
         date: dateStr,
-        details: `Schicht dauert ${hours.toFixed(1)}h (${record.timeFrom} - ${record.timeTo}), Limit: ${LONG_SHIFT_THRESHOLD_HOURS}h`,
+        details: t("ai.anomaly.longShift", {
+          hours: hours.toFixed(1),
+          from: record.timeFrom,
+          to: record.timeTo,
+          limit: LONG_SHIFT_THRESHOLD_HOURS,
+        }),
         value: Math.round(hours * 10) / 10,
       });
     }
@@ -183,9 +190,14 @@ export async function detectAnomalies(
             type: "overlap",
             severity: "critical",
             employeeId: userId,
-            employeeName: userNameMap.get(userId) ?? "Unbekannt",
+            employeeName: userNameMap.get(userId) ?? t("portal.unknownUser"),
             date: dateStr,
-            details: `Ueberlappung: ${a.timeFrom}-${a.timeTo} und ${b.timeFrom}-${b.timeTo}`,
+            details: t("ai.anomaly.overlap", {
+              aFrom: a.timeFrom,
+              aTo: a.timeTo,
+              bFrom: b.timeFrom,
+              bTo: b.timeTo,
+            }),
             value: 0,
           });
         }
@@ -273,9 +285,9 @@ export async function detectAnomalies(
         type: "gap",
         severity: "warning",
         employeeId: userId,
-        employeeName: userNameMap.get(userId) ?? "Unbekannt",
+        employeeName: userNameMap.get(userId) ?? t("portal.unknownUser"),
         date: dateStr,
-        details: `Eingeplant (${totalScheduled.toFixed(1)}h), aber keine Zeiterfassung vorhanden`,
+        details: t("ai.anomaly.gap", { hours: totalScheduled.toFixed(1) }),
         value: Math.round(totalScheduled * 10) / 10,
       });
     }
@@ -356,9 +368,15 @@ export async function detectAnomalies(
         type: "deviation",
         severity: deviationPercent > 50 ? "critical" : "warning",
         employeeId: userId,
-        employeeName: userNameMap.get(userId) ?? "Unbekannt",
+        employeeName: userNameMap.get(userId) ?? t("portal.unknownUser"),
         date: weekLabel,
-        details: `${weekLabel}: Soll ${scheduled.toFixed(1)}h, Ist ${actual.toFixed(1)}h (${isOver ? "+" : "-"}${deviationPercent.toFixed(0)}%)`,
+        details: t("ai.anomaly.deviation", {
+          week: weekLabel,
+          scheduled: scheduled.toFixed(1),
+          actual: actual.toFixed(1),
+          sign: isOver ? "+" : "-",
+          percent: deviationPercent.toFixed(0),
+        }),
         value: Math.round(deviationPercent),
       });
     }

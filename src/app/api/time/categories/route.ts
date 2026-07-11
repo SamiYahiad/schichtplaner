@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 
 // GET /api/time/categories — list categories for org
 export async function GET() {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const categories = await db.timeCategory.findMany({
@@ -24,26 +26,27 @@ const createCategorySchema = z.object({
 
 // POST /api/time/categories — create category
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = createCategorySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -66,26 +69,27 @@ const updateCategorySchema = z.object({
 
 // PATCH /api/time/categories — enable/disable or rename category
 export async function PATCH(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = updateCategorySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -97,7 +101,7 @@ export async function PATCH(request: NextRequest) {
     where: { id, organizationId: member.organizationId },
   });
   if (!existing) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   const updated = await db.timeCategory.update({
@@ -110,19 +114,20 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/time/categories — delete category
 export async function DELETE(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");
   if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.missingId") }, { status: 400 });
   }
 
   // Verify belongs to org
@@ -130,7 +135,7 @@ export async function DELETE(request: NextRequest) {
     where: { id, organizationId: member.organizationId },
   });
   if (!existing) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   // Nullify categoryId on related records instead of cascading

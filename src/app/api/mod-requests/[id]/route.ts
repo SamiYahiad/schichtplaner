@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import { emitToSchedule } from "@/lib/emit";
@@ -18,14 +19,15 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
     return NextResponse.json(
-      { error: "Nur Manager koennen Wuensche bearbeiten" },
+      { error: t("errors.managersOnlyModRequests") },
       { status: 403 }
     );
   }
@@ -36,13 +38,13 @@ export async function PATCH(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -64,14 +66,14 @@ export async function PATCH(
 
   if (!modRequest || modRequest.shift.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Wunsch nicht gefunden" },
+      { error: t("errors.modRequestNotFound") },
       { status: 404 }
     );
   }
 
   if (modRequest.state !== "OPEN") {
     return NextResponse.json(
-      { error: "Wunsch wurde bereits bearbeitet" },
+      { error: t("errors.modRequestAlreadyProcessed") },
       { status: 409 }
     );
   }
@@ -81,7 +83,7 @@ export async function PATCH(
     const shift = modRequest.shift;
     if (shift.bookings.length >= shift.maxEmployees) {
       return NextResponse.json(
-        { error: "Schicht ist voll - Wunsch kann nicht angenommen werden" },
+        { error: t("errors.shiftFullCannotAccept") },
         { status: 409 }
       );
     }
@@ -160,9 +162,10 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { id } = await params;
@@ -180,7 +183,7 @@ export async function DELETE(
 
   if (!modRequest || modRequest.shift.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Wunsch nicht gefunden" },
+      { error: t("errors.modRequestNotFound") },
       { status: 404 }
     );
   }
@@ -189,13 +192,13 @@ export async function DELETE(
   if (!isManagerOrAbove(member.role)) {
     if (modRequest.userId !== member.user.id) {
       return NextResponse.json(
-        { error: "Nur eigene Wuensche koennen storniert werden" },
+        { error: t("errors.canOnlyCancelOwnRequests") },
         { status: 403 }
       );
     }
     if (modRequest.state !== "OPEN") {
       return NextResponse.json(
-        { error: "Nur offene Wuensche koennen storniert werden" },
+        { error: t("errors.canOnlyCancelOpenRequests") },
         { status: 409 }
       );
     }

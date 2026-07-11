@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { getDateFnsLocale } from "@/i18n/date-fns-locale";
 import {
   ArrowLeft,
   Send,
@@ -46,6 +47,8 @@ interface Props {
 
 export function TopicDetail({ topicId }: Props) {
   const router = useRouter();
+  const t = useTranslations();
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
 
@@ -68,10 +71,10 @@ export function TopicDetail({ topicId }: Props) {
       queryClient.invalidateQueries({ queryKey: ["topics", topicId] });
       queryClient.invalidateQueries({ queryKey: ["topics"] });
       setText("");
-      toast.success("Beitrag hinzugefuegt");
+      toast.success(t("portal.postAdded"));
     },
     onError: () => {
-      toast.error("Fehler beim Erstellen");
+      toast.error(t("portal.createError"));
     },
   });
 
@@ -85,11 +88,11 @@ export function TopicDetail({ topicId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["topics"] });
-      toast.success("Thema geloescht");
+      toast.success(t("portal.topicDeleted"));
       router.push("/portal/topics");
     },
     onError: (error: Error) => {
-      toast.error(error.message === "Forbidden" ? "Nur Admins koennen Themen loeschen" : "Fehler beim Loeschen");
+      toast.error(error.message === "Forbidden" ? t("portal.topicDeleteForbidden") : t("portal.deleteError"));
     },
   });
 
@@ -112,9 +115,9 @@ export function TopicDetail({ topicId }: Props) {
       <div className="flex-1">
         <Button variant="ghost" onClick={() => router.push("/portal/topics")} className="gap-2 mb-4">
           <ArrowLeft className="size-4" />
-          Zurueck
+          {t("common.back")}
         </Button>
-        <p className="text-slate-500">Thema nicht gefunden.</p>
+        <p className="text-slate-500">{t("portal.topicNotFound")}</p>
       </div>
     );
   }
@@ -124,7 +127,7 @@ export function TopicDetail({ topicId }: Props) {
       {/* Back button */}
       <Button variant="ghost" onClick={() => router.push("/portal/topics")} className="gap-2 mb-4">
         <ArrowLeft className="size-4" />
-        Zurueck zu Themen
+        {t("portal.backToTopics")}
       </Button>
 
       <div className="rounded-lg border bg-white dark:bg-slate-900 dark:border-slate-800">
@@ -135,11 +138,11 @@ export function TopicDetail({ topicId }: Props) {
             <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
               {topic.creator && (
                 <span>
-                  Erstellt von {topic.creator.firstName} {topic.creator.lastName}
+                  {t("portal.createdBy", { name: `${topic.creator.firstName} ${topic.creator.lastName}` })}
                 </span>
               )}
               <span>
-                am {format(new Date(topic.createdAt), "dd. MMMM yyyy", { locale: de })}
+                {t("portal.onDate", { date: format(new Date(topic.createdAt), "dd. MMMM yyyy", { locale: getDateFnsLocale(locale) }) })}
               </span>
             </div>
           </div>
@@ -158,7 +161,7 @@ export function TopicDetail({ topicId }: Props) {
           {topic.posts.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-slate-500">
               <MessageCircle className="mb-2 size-8 text-slate-300" />
-              <p className="text-sm">Noch keine Beitraege. Schreibe den ersten!</p>
+              <p className="text-sm">{t("portal.noPostsYet")}</p>
             </div>
           ) : (
             topic.posts.map((post) => (
@@ -174,7 +177,7 @@ export function TopicDetail({ topicId }: Props) {
                       {post.user.firstName} {post.user.lastName}
                     </span>
                     <time className="text-xs text-slate-400">
-                      {format(new Date(post.createdAt), "dd. MMM yyyy, HH:mm", { locale: de })}
+                      {format(new Date(post.createdAt), "dd. MMM yyyy, HH:mm", { locale: getDateFnsLocale(locale) })}
                     </time>
                   </div>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">
@@ -192,7 +195,7 @@ export function TopicDetail({ topicId }: Props) {
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Beitrag schreiben..."
+            placeholder={t("portal.writePostPlaceholder")}
             className="min-h-[80px]"
           />
           <div className="mt-3 flex justify-end">
@@ -202,7 +205,7 @@ export function TopicDetail({ topicId }: Props) {
               className="gap-2"
             >
               <Send className="size-4" />
-              {postMutation.isPending ? "Sende..." : "Beitrag senden"}
+              {postMutation.isPending ? t("portal.sending") : t("portal.sendPost")}
             </Button>
           </div>
         </div>

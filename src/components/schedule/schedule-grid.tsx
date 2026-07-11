@@ -2,11 +2,12 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { isToday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { dayNames, formatDateShort } from "@/lib/utils/calendar";
+import { formatDateShort } from "@/lib/utils/calendar";
 import { useCurrentMember } from "@/lib/hooks/use-current-member";
 import { cn } from "@/lib/utils";
 import { ShiftCard } from "./shift-card";
@@ -26,6 +27,8 @@ interface ScheduleGridProps {
 }
 
 export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps) {
+  const t = useTranslations();
+  const dayNames = t.raw("schedule.dayNamesShort") as string[];
   const { data: member } = useCurrentMember();
   const isManager =
     member?.role === "OWNER" ||
@@ -43,7 +46,7 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
     queryKey: ["schedule", weekNumber, year],
     queryFn: async () => {
       const res = await fetch(`/api/schedules?kw=${weekNumber}&year=${year}`);
-      if (!res.ok) throw new Error("Fehler beim Laden der Schichten");
+      if (!res.ok) throw new Error(t("schedule.errorLoadingSchedule"));
       return res.json();
     },
   });
@@ -227,7 +230,7 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
                     </div>
                     {todayHighlight && (
                       <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                        Heute
+                        {t("time.today")}
                       </span>
                     )}
                   </div>
@@ -241,7 +244,7 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
                   {dayShifts.length === 0 && (
                     <div className="flex items-center justify-center py-4">
                       <span className="text-xs text-muted-foreground">
-                        Keine Schichten
+                        {t("schedule.noShifts")}
                       </span>
                     </div>
                   )}
@@ -270,7 +273,7 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
                       onClick={() => handleAddShift(dayOfWeek)}
                     >
                       <Plus className="size-3.5" />
-                      Schicht
+                      {t("schedule.addShiftButton")}
                     </Button>
                   )}
                 </div>
@@ -312,12 +315,12 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
                   <div className="flex items-center gap-2">
                     {todayHighlight && (
                       <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                        Heute
+                        {t("time.today")}
                       </span>
                     )}
                     {dayShifts.length > 0 && (
                       <span className="text-xs text-muted-foreground">
-                        {dayShifts.length} {dayShifts.length === 1 ? "Schicht" : "Schichten"}
+                        {dayShifts.length} {t("schedule.shiftWord", { count: dayShifts.length })}
                       </span>
                     )}
                   </div>
@@ -327,7 +330,7 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
                 <div className="p-3 space-y-2">
                   {dayShifts.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-2">
-                      Keine Schichten
+                      {t("schedule.noShifts")}
                     </p>
                   )}
 
@@ -354,7 +357,7 @@ export function ScheduleGrid({ weekNumber, year, weekDates }: ScheduleGridProps)
                       onClick={() => handleAddShift(dayOfWeek)}
                     >
                       <Plus className="size-3.5" />
-                      Schicht hinzufuegen
+                      {t("schedule.addShiftButtonFull")}
                     </Button>
                   )}
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -64,6 +65,7 @@ export function ScheduleOptions({
   divisionFilter,
   onDivisionFilterChange,
 }: ScheduleOptionsProps) {
+  const t = useTranslations();
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {/* Sichtbarkeit */}
@@ -80,12 +82,12 @@ export function ScheduleOptions({
           {schedule.isPublic ? (
             <>
               <span className="size-1.5 rounded-full bg-green-400 animate-pulse" />
-              Veroeffentlicht
+              {t("schedule.published")}
             </>
           ) : (
             <>
               <EyeOff className="size-3" />
-              Unsichtbar
+              {t("schedule.hidden")}
             </>
           )}
         </Badge>
@@ -131,6 +133,7 @@ function VisibilityToggle({
   scheduleId: string;
   isPublic: boolean;
 }) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -140,14 +143,14 @@ function VisibilityToggle({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPublic: newValue }),
       });
-      if (!res.ok) throw new Error("Fehler beim Aktualisieren");
+      if (!res.ok) throw new Error(t("common.errorUpdating"));
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule"] });
     },
     onError: () => {
-      toast.error("Fehler beim Aendern der Sichtbarkeit");
+      toast.error(t("schedule.errorChangingVisibility"));
     },
   });
 
@@ -158,12 +161,12 @@ function VisibilityToggle({
           {isPublic ? (
             <>
               <span className="size-1.5 rounded-full bg-green-500" />
-              Veroeffentlicht
+              {t("schedule.published")}
             </>
           ) : (
             <>
               <EyeOff className="size-3.5" />
-              Unsichtbar
+              {t("schedule.hidden")}
             </>
           )}
         </Button>
@@ -171,16 +174,16 @@ function VisibilityToggle({
       <PopoverContent align="start" className="w-72">
         <div className="space-y-3">
           <div className="space-y-1">
-            <p className="text-sm font-medium">Sichtbarkeit</p>
+            <p className="text-sm font-medium">{t("schedule.visibility")}</p>
             <p className="text-xs text-muted-foreground">
               {isPublic
-                ? "Der Schichtplan ist fuer alle Mitarbeiter sichtbar."
-                : "Der Schichtplan ist nur fuer Manager sichtbar. Mitarbeiter koennen ihn nicht einsehen."}
+                ? t("schedule.visibilityPublicHint")
+                : t("schedule.visibilityPrivateHint")}
             </p>
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="visibility-switch" className="text-sm">
-              {isPublic ? "Oeffentlich" : "Privat"}
+              {isPublic ? t("schedule.publicLabel") : t("schedule.privateLabel")}
             </Label>
             <Switch
               id="visibility-switch"
@@ -206,11 +209,12 @@ function DivisionFilter({
   divisionFilter: string | null;
   onDivisionFilterChange: (divisionId: string | null) => void;
 }) {
+  const t = useTranslations();
   const { data } = useQuery<{ divisions: DivisionOption[] }>({
     queryKey: ["divisions"],
     queryFn: async () => {
       const res = await fetch("/api/divisions");
-      if (!res.ok) throw new Error("Fehler beim Laden der Bereiche");
+      if (!res.ok) throw new Error(t("schedule.errorLoadingDivisions"));
       return res.json();
     },
   });
@@ -232,18 +236,18 @@ function DivisionFilter({
               {selectedDivision.title}
             </>
           ) : (
-            "Bereich"
+            t("schedule.division")
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        <DropdownMenuLabel>Bereich filtern</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("schedule.filterDivision")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => onDivisionFilterChange(null)}
           className={cn(!divisionFilter && "font-semibold")}
         >
-          Alle
+          {t("common.all")}
         </DropdownMenuItem>
         {divisions
           .filter((d) => !("isSystem" in d && d.isSystem))
@@ -281,6 +285,7 @@ function OptionsMenu({
   showTitle: boolean;
   showPauses: boolean;
 }) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -290,14 +295,14 @@ function OptionsMenu({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Fehler beim Aktualisieren");
+      if (!res.ok) throw new Error(t("common.errorUpdating"));
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule"] });
     },
     onError: () => {
-      toast.error("Fehler beim Speichern");
+      toast.error(t("common.errorSaving"));
     },
   });
 
@@ -306,11 +311,11 @@ function OptionsMenu({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Settings2 className="size-3.5" />
-          Optionen
+          {t("schedule.options")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel>Anzeige</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("schedule.display")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
         {/* Layout Toggle */}
@@ -321,7 +326,7 @@ function OptionsMenu({
           }
         >
           <Layout className="size-3.5" />
-          Layout 1 (Schatten)
+          {t("schedule.layout1")}
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={settingsLayout === "LAYOUT_2"}
@@ -330,7 +335,7 @@ function OptionsMenu({
           }
         >
           <Layout className="size-3.5" />
-          Layout 2 (Farbrand)
+          {t("schedule.layout2")}
         </DropdownMenuCheckboxItem>
 
         <DropdownMenuSeparator />
@@ -343,7 +348,7 @@ function OptionsMenu({
           }
         >
           <Type className="size-3.5" />
-          Titel anzeigen
+          {t("schedule.showTitles")}
         </DropdownMenuCheckboxItem>
 
         {/* Show/hide pauses */}
@@ -354,7 +359,7 @@ function OptionsMenu({
           }
         >
           <Pause className="size-3.5" />
-          Pausen anzeigen
+          {t("schedule.showPausesOption")}
         </DropdownMenuCheckboxItem>
 
         <DropdownMenuSeparator />
@@ -363,14 +368,14 @@ function OptionsMenu({
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <Download className="size-3.5" />
-            Export
+            {t("common.export")}
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuItem disabled>
-              PDF (kommt bald)
+              {t("schedule.exportPdfComingSoon")}
             </DropdownMenuItem>
             <DropdownMenuItem disabled>
-              Excel (kommt bald)
+              {t("schedule.exportExcelComingSoon")}
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
@@ -388,6 +393,7 @@ function BriefingButton({
   scheduleId: string;
   isManager: boolean;
 }) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -399,7 +405,7 @@ function BriefingButton({
     queryKey: ["briefing", scheduleId],
     queryFn: async () => {
       const res = await fetch(`/api/schedules/${scheduleId}/briefing`);
-      if (!res.ok) throw new Error("Fehler beim Laden");
+      if (!res.ok) throw new Error(t("common.errorLoading"));
       return res.json();
     },
     enabled: !!scheduleId,
@@ -439,12 +445,12 @@ function BriefingButton({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Speichern");
+        throw new Error(data.error || t("common.errorSaving"));
       }
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Briefing gespeichert");
+      toast.success(t("schedule.toastBriefingSaved"));
       queryClient.invalidateQueries({ queryKey: ["briefing", scheduleId] });
       setInitialText(text);
     },
@@ -459,17 +465,17 @@ function BriefingButton({
       const res = await fetch(`/api/schedules/${scheduleId}/briefing`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Fehler beim Loeschen");
+      if (!res.ok) throw new Error(t("common.errorDeleting"));
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Briefing geloescht");
+      toast.success(t("schedule.toastBriefingDeleted"));
       queryClient.invalidateQueries({ queryKey: ["briefing", scheduleId] });
       setText("");
       setInitialText("");
     },
     onError: () => {
-      toast.error("Fehler beim Loeschen des Briefings");
+      toast.error(t("schedule.errorDeletingBriefing"));
     },
   });
 
@@ -485,7 +491,7 @@ function BriefingButton({
           className={cn("gap-1.5", hasBriefing && "border-blue-300 text-blue-600")}
         >
           <FileText className="size-3.5" />
-          Briefing
+          {t("schedule.briefing")}
           {hasBriefing && (
             <span className="size-1.5 rounded-full bg-blue-500" />
           )}
@@ -493,10 +499,9 @@ function BriefingButton({
       </SheetTrigger>
       <SheetContent side="right" className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>Wochen-Briefing</SheetTitle>
+          <SheetTitle>{t("schedule.weeklyBriefing")}</SheetTitle>
           <SheetDescription>
-            Informationen und Hinweise fuer diese Woche. Sichtbar fuer alle
-            Mitarbeiter.
+            {t("schedule.weeklyBriefingDescription")}
           </SheetDescription>
         </SheetHeader>
 
@@ -510,7 +515,7 @@ function BriefingButton({
               ref={textareaRef}
               value={text}
               onChange={handleTextChange}
-              placeholder="Briefing-Text eingeben..."
+              placeholder={t("schedule.briefingPlaceholder")}
               className="min-h-[200px] resize-none"
               disabled={isPending}
             />
@@ -520,7 +525,7 @@ function BriefingButton({
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-8">
-              Kein Briefing fuer diese Woche.
+              {t("schedule.noBriefingThisWeek")}
             </p>
           )}
         </div>
@@ -532,7 +537,7 @@ function BriefingButton({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (confirm("Briefing wirklich loeschen?")) {
+                  if (confirm(t("schedule.confirmDeleteBriefing"))) {
                     deleteMutation.mutate();
                   }
                 }}
@@ -544,7 +549,7 @@ function BriefingButton({
                 ) : (
                   <Trash2 className="size-3.5" />
                 )}
-                Loeschen
+                {t("common.delete")}
               </Button>
             )}
             <Button
@@ -558,7 +563,7 @@ function BriefingButton({
               ) : (
                 <Save className="size-3.5" />
               )}
-              Speichern
+              {t("common.save")}
             </Button>
           </SheetFooter>
         )}
@@ -570,6 +575,7 @@ function BriefingButton({
 // ─── AI Briefing Button ─────────────────────────────────────────────
 
 function AiBriefingButton({ scheduleId }: { scheduleId: string }) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -581,7 +587,7 @@ function AiBriefingButton({ scheduleId }: { scheduleId: string }) {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Generieren");
+        throw new Error(data.error || t("schedule.errorGenerating"));
       }
       return res.json();
     },
@@ -594,9 +600,9 @@ function AiBriefingButton({ scheduleId }: { scheduleId: string }) {
       });
       if (res.ok) {
         queryClient.invalidateQueries({ queryKey: ["briefing", scheduleId] });
-        toast.success("KI-Briefing erstellt und gespeichert");
+        toast.success(t("schedule.toastAiBriefingSaved"));
       } else {
-        toast.success("KI-Briefing erstellt (manuell speichern)");
+        toast.success(t("schedule.toastAiBriefingCreatedManualSave"));
       }
     },
     onError: (error: Error) => {
@@ -617,7 +623,7 @@ function AiBriefingButton({ scheduleId }: { scheduleId: string }) {
       ) : (
         <Sparkles className="size-3.5" />
       )}
-      KI-Briefing
+      {t("schedule.aiBriefing")}
     </Button>
   );
 }

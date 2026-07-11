@@ -6,6 +6,7 @@
  * absences, and performing destructive actions with confirmation.
  */
 
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 
 // ─── Tool Definitions ──────────────────────────────────────────────
@@ -159,17 +160,7 @@ export const chatTools: ChatTool[] = [
 
 // ─── Tool Execution ────────────────────────────────────────────────
 
-/** Day name lookup */
-const DAY_NAMES = [
-  "",
-  "Montag",
-  "Dienstag",
-  "Mittwoch",
-  "Donnerstag",
-  "Freitag",
-  "Samstag",
-  "Sonntag",
-];
+type Translator = Awaited<ReturnType<typeof getTranslations>>;
 
 /** Get the Monday of an ISO week. */
 function getWeekStartDate(weekNumber: number, year: number): Date {
@@ -190,6 +181,12 @@ function estimateHours(from: string, to: string): number {
   return diff / 60;
 }
 
+/** Localized weekday name (1=Monday..7=Sunday), with a numeric fallback. */
+function dayName(t: Translator, dayOfWeek: number): string {
+  const names = t.raw("ai.toolResult.dayNames") as string[];
+  return names[dayOfWeek - 1] ?? t("ai.toolResult.dayFallback", { day: dayOfWeek });
+}
+
 export type ToolResult = {
   content: string;
   requiresConfirmation?: boolean;
@@ -206,21 +203,22 @@ export async function executeTool(
   orgId: string,
   userId: string
 ): Promise<ToolResult> {
+  const t = await getTranslations();
   switch (toolName) {
     case "getSchedule":
-      return executeGetSchedule(input, orgId);
+      return executeGetSchedule(input, orgId, t);
     case "getEmployeeHours":
-      return executeGetEmployeeHours(input, orgId);
+      return executeGetEmployeeHours(input, orgId, t);
     case "searchEmployees":
-      return executeSearchEmployees(input, orgId);
+      return executeSearchEmployees(input, orgId, t);
     case "createShift":
-      return executeCreateShift(input, orgId);
+      return executeCreateShift(input, orgId, t);
     case "bookEmployee":
-      return executeBookEmployee(input, orgId, userId);
+      return executeBookEmployee(input, orgId, userId, t);
     case "getAbsences":
-      return executeGetAbsences(input, orgId);
+      return executeGetAbsences(input, orgId, t);
     default:
-      return { content: `Unbekanntes Tool: ${toolName}` };
+      return { content: t("ai.toolResult.unknownTool", { toolName }) };
   }
 }
 
@@ -228,7 +226,8 @@ export async function executeTool(
 
 async function executeGetSchedule(
   input: Record<string, unknown>,
-  orgId: string
+  orgId: string,
+  t: Translator
 ): Promise<ToolResult> {
   const weekNumber = input.weekNumber as number;
   const year = input.year as number;
@@ -261,17 +260,23 @@ async function executeGetSchedule(
 
   if (!schedule) {
     return {
-      content: `Kein Schichtplan fuer KW ${weekNumber}/${year} gefunden.`,
+      content: t("ai.toolResult.noSchedule", { weekNumber, year }),
     };
   }
 
   const lines: string[] = [
-    `Schichtplan KW ${weekNumber}/${year} (${schedule.isPublic ? "veroeffentlicht" : "nicht veroeffentlicht"}):`,
+    t("ai.toolResult.scheduleHeader", {
+      weekNumber,
+      year,
+      status: schedule.isPublic
+        ? t("ai.toolResult.published")
+        : t("ai.toolResult.notPublished"),
+    }),
     "",
   ];
 
   for (const shift of schedule.shifts) {
-    const day = DAY_NAMES[shift.dayOfWeek] ?? `Tag ${shift.dayOfWeek}`;
+    const day = dayName(t, shift.dayOfWeek);
     const bookedNames = shift.bookings
       .map((b) => `${b.user.firstName} ${b.user.lastName}`)
       .join(", ");
@@ -279,7 +284,7 @@ async function executeGetSchedule(
     const spots = `${shift.bookings.length}/${shift.maxEmployees}`;
 
     lines.push(
-      `- ${day} ${shift.shiftFrom}-${shift.shiftTo}${division} (${spots} belegt)${bookedNames ? `: ${bookedNames}` : ""} [ID: ${shift.id}]`
+      `- ${day} ${shift.shiftFrom}-${shift.shiftTo}${division} (${spots} ${t("ai.toolResult.occupiedLabel")})${bookedNames ? `: ${bookedNames}` : ""} [ID: ${shift.id}]`
     );
   }
 
@@ -288,7 +293,8 @@ async function executeGetSchedule(
 
 async function executeGetEmployeeHours(
   input: Record<string, unknown>,
-  orgId: string
+  orgId: string,
+  t: Translator
 ): Promise<ToolResult> {
   const employeeId = input.employeeId as string;
   const year = input.year as number;
@@ -301,7 +307,7 @@ async function executeGetEmployeeHours(
   });
 
   if (!member) {
-    return { content: "Mitarbeiter nicht gefunden oder nicht in dieser Organisation." };
+    return { content: t("ai.toolResult.employeeNotFoundInOrg") };
   }
 
   const name = `${member.user.firstName} ${member.user.lastName}`;
@@ -346,23 +352,38 @@ async function executeGetEmployeeHours(
 
   if (weekNumber) {
     return {
-      content: `${name} hat in KW ${weekNumber}/${year} insgesamt ${totalHours.toFixed(1)} Stunden (${bookings.length} Schichten).`,
+      content: t("ai.toolResult.hoursWeekSummary", {
+        name,
+        weekNumber,
+        year,
+        hours: totalHours.toFixed(1),
+        count: bookings.length,
+      }),
     };
   }
 
   const weekEntries = [...weeklyHours.entries()]
     .sort(([a], [b]) => a - b)
-    .map(([wk, h]) => `  KW ${wk}: ${h.toFixed(1)}h`)
+    .map(([wk, h]) =>
+      t("ai.toolResult.weekEntryLine", { week: wk, hours: h.toFixed(1) })
+    )
     .join("\n");
 
+  const header = t("ai.toolResult.hoursYearHeader", { name, year });
+  const summary = t("ai.toolResult.hoursYearSummary", {
+    hours: totalHours.toFixed(1),
+    count: bookings.length,
+  });
+
   return {
-    content: `${name} - Stunden ${year}:\nGesamt: ${totalHours.toFixed(1)}h (${bookings.length} Schichten)\n${weekEntries}`,
+    content: `${header}\n${summary}\n${weekEntries}`,
   };
 }
 
 async function executeSearchEmployees(
   input: Record<string, unknown>,
-  orgId: string
+  orgId: string,
+  t: Translator
 ): Promise<ToolResult> {
   const query = (input.query as string).toLowerCase();
 
@@ -393,7 +414,7 @@ async function executeSearchEmployees(
   });
 
   if (members.length === 0) {
-    return { content: `Keine Mitarbeiter mit "${query}" gefunden.` };
+    return { content: t("ai.toolResult.noEmployeesMatching", { query }) };
   }
 
   // Get division memberships
@@ -415,18 +436,26 @@ async function executeSearchEmployees(
 
   const lines = members.map((m) => {
     const divs = userDivisions.get(m.user.id) ?? [];
-    const divText = divs.length > 0 ? ` | Bereiche: ${divs.join(", ")}` : "";
+    const divText =
+      divs.length > 0
+        ? ` | ${t("ai.toolResult.divisionsLabel")}: ${divs.join(", ")}`
+        : "";
     return `- ${m.user.firstName} ${m.user.lastName} (${m.role})${divText} [ID: ${m.user.id}]`;
   });
 
+  const header = t("ai.toolResult.employeesFoundHeader", {
+    count: members.length,
+  });
+
   return {
-    content: `${members.length} Mitarbeiter gefunden:\n${lines.join("\n")}`,
+    content: `${header}\n${lines.join("\n")}`,
   };
 }
 
 async function executeCreateShift(
   input: Record<string, unknown>,
-  orgId: string
+  orgId: string,
+  t: Translator
 ): Promise<ToolResult> {
   const weekNumber = input.weekNumber as number;
   const year = input.year as number;
@@ -467,10 +496,10 @@ async function executeCreateShift(
     },
   });
 
-  const day = DAY_NAMES[dayOfWeek] ?? `Tag ${dayOfWeek}`;
+  const day = dayName(t, dayOfWeek);
 
   return {
-    content: `Schicht erstellt: ${day} ${shiftFrom}-${shiftTo} (max. ${maxEmployees} MA) in KW ${weekNumber}/${year} [ID: ${shift.id}]`,
+    content: `${t("ai.toolResult.shiftCreated", { day, shiftFrom, shiftTo, maxEmployees, weekNumber, year })} [ID: ${shift.id}]`,
     requiresConfirmation: true,
     data: shift,
   };
@@ -479,7 +508,8 @@ async function executeCreateShift(
 async function executeBookEmployee(
   input: Record<string, unknown>,
   orgId: string,
-  userId: string
+  userId: string,
+  t: Translator
 ): Promise<ToolResult> {
   const shiftId = input.shiftId as string;
   const employeeId = input.employeeId as string;
@@ -498,17 +528,17 @@ async function executeBookEmployee(
   });
 
   if (!shift) {
-    return { content: "Schicht nicht gefunden." };
+    return { content: t("ai.toolResult.shiftNotFound") };
   }
 
   if (shift.bookings.length >= shift.maxEmployees) {
-    return { content: "Schicht ist bereits voll belegt." };
+    return { content: t("ai.toolResult.shiftFullyBooked") };
   }
 
   // Check if already booked
   const existing = shift.bookings.find((b) => b.userId === employeeId);
   if (existing) {
-    return { content: "Mitarbeiter ist bereits in dieser Schicht gebucht." };
+    return { content: t("ai.toolResult.alreadyBookedInShift") };
   }
 
   // Verify employee
@@ -518,7 +548,7 @@ async function executeBookEmployee(
   });
 
   if (!member) {
-    return { content: "Mitarbeiter nicht gefunden." };
+    return { content: t("ai.toolResult.employeeNotFound") };
   }
 
   // Create booking
@@ -530,11 +560,17 @@ async function executeBookEmployee(
     },
   });
 
-  const day = DAY_NAMES[shift.dayOfWeek] ?? `Tag ${shift.dayOfWeek}`;
+  const day = dayName(t, shift.dayOfWeek);
   const name = `${member.user.firstName} ${member.user.lastName}`;
 
   return {
-    content: `${name} wurde in die Schicht ${day} ${shift.shiftFrom}-${shift.shiftTo} (KW ${shift.schedule.weekNumber}) eingebucht.`,
+    content: t("ai.toolResult.employeeBooked", {
+      name,
+      day,
+      shiftFrom: shift.shiftFrom,
+      shiftTo: shift.shiftTo,
+      weekNumber: shift.schedule.weekNumber,
+    }),
     requiresConfirmation: true,
     data: { shiftId, employeeId },
   };
@@ -542,7 +578,8 @@ async function executeBookEmployee(
 
 async function executeGetAbsences(
   input: Record<string, unknown>,
-  orgId: string
+  orgId: string,
+  t: Translator
 ): Promise<ToolResult> {
   const from = new Date(input.from as string);
   const to = new Date(input.to as string);
@@ -570,7 +607,7 @@ async function executeGetAbsences(
   });
 
   if (absences.length === 0) {
-    return { content: "Keine Abwesenheiten im angegebenen Zeitraum gefunden." };
+    return { content: t("ai.toolResult.noAbsencesFound") };
   }
 
   const lines = absences.map((a) => {
@@ -578,14 +615,19 @@ async function executeGetAbsences(
     const toStr = a.dateTo.toISOString().split("T")[0];
     const status =
       a.status === "APPROVED"
-        ? "genehmigt"
+        ? t("employees.statusApproved")
         : a.status === "PENDING"
-          ? "ausstehend"
-          : "abgelehnt";
-    return `- ${a.user.firstName} ${a.user.lastName}: ${a.category.name} (${fromStr} bis ${toStr}) - ${status}`;
+          ? t("employees.statusPending")
+          : t("employees.statusDeclined");
+    const range = t("ai.toolResult.dateRange", { from: fromStr, to: toStr });
+    return `- ${a.user.firstName} ${a.user.lastName}: ${a.category.name} (${range}) - ${status}`;
+  });
+
+  const header = t("ai.toolResult.absencesFoundHeader", {
+    count: absences.length,
   });
 
   return {
-    content: `${absences.length} Abwesenheiten gefunden:\n${lines.join("\n")}`,
+    content: `${header}\n${lines.join("\n")}`,
   };
 }

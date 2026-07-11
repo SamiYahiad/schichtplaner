@@ -7,6 +7,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { checkRateLimit } from "./rate-limiter";
 
@@ -34,15 +35,13 @@ const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 
 let _client: Anthropic | null = null;
 
-function getClient(): Anthropic {
+async function getClient(): Promise<Anthropic> {
   if (_client) return _client;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    throw new AIError(
-      "ANTHROPIC_API_KEY ist nicht konfiguriert",
-      "MISSING_API_KEY"
-    );
+    const t = await getTranslations();
+    throw new AIError(t("errors.anthropicKeyMissing"), "MISSING_API_KEY");
   }
 
   _client = new Anthropic({ apiKey });
@@ -65,6 +64,15 @@ const featureToColumn: Record<AIFeature, string> = {
   chatEnabled: "aiChatEnabled",
   forecast: "aiForecast",
   smartBriefing: "aiSmartBriefing",
+};
+
+/** Map feature name to its translated "disabled" error message key. */
+const featureToDisabledErrorKey: Record<AIFeature, string> = {
+  autoPlanner: "errors.autoPlannerDisabled",
+  anomalyDetection: "errors.anomalyDetectionDisabled",
+  chatEnabled: "errors.chatDisabled",
+  forecast: "errors.forecastDisabled",
+  smartBriefing: "errors.smartBriefingDisabled",
 };
 
 /**
@@ -133,27 +141,26 @@ export async function generateAIResponse(
     model = DEFAULT_MODEL,
   } = params;
 
+  const t = await getTranslations();
+
   // 1. Feature gate
   const enabled = await isAIFeatureEnabled(orgId, feature);
   if (!enabled) {
-    throw new AIError(
-      `KI-Feature "${feature}" ist fuer diese Organisation deaktiviert`,
-      "AI_DISABLED"
-    );
+    throw new AIError(t(featureToDisabledErrorKey[feature]), "AI_DISABLED");
   }
 
   // 2. Rate limiting
   const rateResult = checkRateLimit(orgId);
   if (!rateResult.allowed) {
     throw new AIError(
-      `Rate-Limit erreicht. Bitte in ${rateResult.retryAfter}s erneut versuchen.`,
+      t("errors.rateLimitReached", { seconds: rateResult.retryAfter ?? 0 }),
       "RATE_LIMITED",
       rateResult.retryAfter
     );
   }
 
   // 3. Call Claude
-  const client = getClient();
+  const client = await getClient();
 
   try {
     const response = await client.messages.create({
@@ -166,10 +173,7 @@ export async function generateAIResponse(
     // Extract text content
     const textBlock = response.content.find((block) => block.type === "text");
     if (!textBlock || textBlock.type !== "text") {
-      throw new AIError(
-        "Claude hat keine Textantwort zurueckgegeben",
-        "INVALID_RESPONSE"
-      );
+      throw new AIError(t("errors.aiNoTextResponse"), "INVALID_RESPONSE");
     }
 
     return {
@@ -184,7 +188,7 @@ export async function generateAIResponse(
 
     // Wrap Anthropic SDK / network errors
     const message =
-      error instanceof Error ? error.message : "Unbekannter KI-Fehler";
-    throw new AIError(`Claude API Fehler: ${message}`, "API_ERROR");
+      error instanceof Error ? error.message : t("errors.unknownError");
+    throw new AIError(t("errors.aiApiError", { message }), "API_ERROR");
   }
 }

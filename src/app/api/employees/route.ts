@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember, isAdminOrAbove } from "@/lib/auth-helpers";
@@ -6,9 +7,10 @@ import bcrypt from "bcryptjs";
 
 // GET /api/employees - List all org members
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { searchParams } = request.nextUrl;
@@ -98,26 +100,27 @@ const createEmployeeSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isAdminOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = createEmployeeSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -150,7 +153,7 @@ export async function POST(request: NextRequest) {
     if (alreadyMemberEmails.length > 0) {
       return NextResponse.json(
         {
-          error: "Some employees are already members",
+          error: t("errors.someEmployeesAlreadyMembers"),
           emails: alreadyMemberEmails,
         },
         { status: 409 }

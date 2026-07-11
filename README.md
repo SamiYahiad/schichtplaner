@@ -22,7 +22,7 @@
 
 **Schichtplaner** (German for "shift planner") is a fully-featured, self-hosted solution for shift scheduling and workforce management. Built with a modern tech stack, it covers everything from shift planning and time tracking to AI-powered schedule optimization — with no dependency on external SaaS services.
 
-> **Note:** The application UI is in German. Internationalization (i18n) support is planned for future releases.
+> **Note:** The application UI is available in French (default), German, and English. Signed-in users can switch languages from the user menu.
 
 ## Features
 
@@ -84,7 +84,7 @@
 - **Dark mode** — theme switching
 - **Real-time updates** — Socket.IO for live changes
 - **Responsive** — fully mobile-optimized
-- **German UI** — complete German user interface
+- **Multi-language** — French (default), German, and English, switchable per user
 
 ## Tech Stack
 

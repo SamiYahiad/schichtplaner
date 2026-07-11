@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { ChevronDown, Search, Users, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +54,7 @@ export function EmployeeNav({
   selectedEmployeeId,
   onSelectEmployee,
 }: EmployeeNavProps) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -61,7 +63,7 @@ export function EmployeeNav({
     queryKey: ["employees", "active"],
     queryFn: async () => {
       const res = await fetch("/api/employees?status=active");
-      if (!res.ok) throw new Error("Fehler beim Laden");
+      if (!res.ok) throw new Error(t("common.errorLoading"));
       return res.json();
     },
   });
@@ -129,7 +131,7 @@ export function EmployeeNav({
               </>
             ) : (
               <>
-                Alle Mitarbeiter
+                {t("schedule.allEmployees")}
                 <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">
                   {totalHours.toFixed(1)}H
                 </Badge>
@@ -145,7 +147,7 @@ export function EmployeeNav({
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Mitarbeiter suchen..."
+              placeholder={t("time.searchEmployees")}
               className="h-7 border-0 bg-transparent p-0 text-sm focus-visible:ring-0 shadow-none"
             />
           </div>
@@ -169,7 +171,7 @@ export function EmployeeNav({
               <div className="size-6 rounded-full bg-muted flex items-center justify-center">
                 <Users className="size-3" />
               </div>
-              <span className="flex-1 text-left">Alle Mitarbeiter</span>
+              <span className="flex-1 text-left">{t("schedule.allEmployees")}</span>
               <Badge variant="secondary" className="text-[9px] px-1 py-0">
                 {totalHours.toFixed(1)}H
               </Badge>

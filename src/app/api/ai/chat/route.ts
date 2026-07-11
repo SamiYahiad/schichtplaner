@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { getTranslations } from "next-intl/server";
 import { getCurrentMember } from "@/lib/auth-helpers";
 import { isAIFeatureEnabled, AIError } from "@/lib/ai/client";
 import { checkRateLimit } from "@/lib/ai/rate-limiter";
@@ -47,9 +48,10 @@ const confirmationTools = new Set(
 );
 
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   // Check feature flag
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
   );
   if (!enabled) {
     return NextResponse.json(
-      { error: "KI-Chat ist fuer diese Organisation deaktiviert" },
+      { error: t("errors.chatDisabled") },
       { status: 403 }
     );
   }
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
   if (!rateResult.allowed) {
     return NextResponse.json(
       {
-        error: `Rate-Limit erreicht. Bitte in ${rateResult.retryAfter}s erneut versuchen.`,
+        error: t("errors.rateLimitReached", { seconds: rateResult.retryAfter ?? 0 }),
       },
       { status: 429 }
     );
@@ -79,12 +81,12 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {
     return NextResponse.json(
-      { error: "messages array is required" },
+      { error: t("errors.messagesArrayRequired") },
       { status: 400 }
     );
   }
@@ -92,7 +94,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY nicht konfiguriert" },
+      { error: t("errors.anthropicKeyMissing") },
       { status: 500 }
     );
   }
@@ -205,9 +207,9 @@ export async function POST(request: NextRequest) {
 
     console.error("[AI Chat] Error:", error);
     const message =
-      error instanceof Error ? error.message : "Unbekannter Fehler";
+      error instanceof Error ? error.message : t("errors.unknownError");
     return NextResponse.json(
-      { error: `KI-Chat Fehler: ${message}` },
+      { error: t("errors.chatError", { message }) },
       { status: 500 }
     );
   }

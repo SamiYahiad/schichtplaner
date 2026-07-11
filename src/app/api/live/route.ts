@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
@@ -9,15 +10,16 @@ import { emitToSchedule } from "@/lib/emit";
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const scheduleId = request.nextUrl.searchParams.get("scheduleId");
   if (!scheduleId) {
     return NextResponse.json(
-      { error: "Missing scheduleId parameter" },
+      { error: t("errors.missingScheduleId") },
       { status: 400 }
     );
   }
@@ -33,7 +35,7 @@ export async function GET(request: NextRequest) {
 
   if (!schedule) {
     return NextResponse.json(
-      { error: "Schichtplan nicht gefunden" },
+      { error: t("errors.scheduleNotFound") },
       { status: 404 }
     );
   }
@@ -70,14 +72,15 @@ const startSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
     return NextResponse.json(
-      { error: "Nur Manager koennen den Live-Modus starten" },
+      { error: t("errors.managersOnlyStartLive") },
       { status: 403 }
     );
   }
@@ -86,13 +89,13 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = startSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -110,7 +113,7 @@ export async function POST(request: NextRequest) {
 
   if (!schedule) {
     return NextResponse.json(
-      { error: "Schichtplan nicht gefunden" },
+      { error: t("errors.scheduleNotFound") },
       { status: 404 }
     );
   }
@@ -122,7 +125,7 @@ export async function POST(request: NextRequest) {
 
   if (existing?.isActive) {
     return NextResponse.json(
-      { error: "Live-Modus ist bereits aktiv" },
+      { error: t("errors.liveModeAlreadyActive") },
       { status: 409 }
     );
   }
@@ -191,14 +194,15 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
     return NextResponse.json(
-      { error: "Nur Manager koennen den Live-Modus aendern" },
+      { error: t("errors.managersOnlyChangeLive") },
       { status: 403 }
     );
   }
@@ -206,7 +210,7 @@ export async function PATCH(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get("id");
   if (!sessionId) {
     return NextResponse.json(
-      { error: "Missing id parameter" },
+      { error: t("errors.missingIdParam") },
       { status: 400 }
     );
   }
@@ -215,13 +219,13 @@ export async function PATCH(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -236,7 +240,7 @@ export async function PATCH(request: NextRequest) {
 
   if (!session || session.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Live-Session nicht gefunden" },
+      { error: t("errors.liveSessionNotFound") },
       { status: 404 }
     );
   }
@@ -304,14 +308,15 @@ export async function PATCH(request: NextRequest) {
 // ---------------------------------------------------------------------------
 
 export async function DELETE(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
     return NextResponse.json(
-      { error: "Nur Manager koennen den Live-Modus stoppen" },
+      { error: t("errors.managersOnlyStopLive") },
       { status: 403 }
     );
   }
@@ -319,7 +324,7 @@ export async function DELETE(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get("id");
   if (!sessionId) {
     return NextResponse.json(
-      { error: "Missing id parameter" },
+      { error: t("errors.missingIdParam") },
       { status: 400 }
     );
   }
@@ -334,7 +339,7 @@ export async function DELETE(request: NextRequest) {
 
   if (!session || session.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Live-Session nicht gefunden" },
+      { error: t("errors.liveSessionNotFound") },
       { status: 404 }
     );
   }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Send, X, Check } from "lucide-react";
 import {
   Dialog,
@@ -50,6 +51,7 @@ interface Props {
 }
 
 export function ComposeMessage({ open, onOpenChange, defaultRecipientIds, defaultSubject }: Props) {
+  const t = useTranslations();
   const queryClient = useQueryClient();
   const [recipientIds, setRecipientIds] = useState<string[]>(defaultRecipientIds ?? []);
   const [subject, setSubject] = useState(defaultSubject ?? "");
@@ -76,12 +78,12 @@ export function ComposeMessage({ open, onOpenChange, defaultRecipientIds, defaul
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages"] });
-      toast.success("Nachricht gesendet");
+      toast.success(t("portal.messageSent"));
       resetForm();
       onOpenChange(false);
     },
     onError: () => {
-      toast.error("Fehler beim Senden");
+      toast.error(t("portal.sendError"));
     },
   });
 
@@ -107,19 +109,19 @@ export function ComposeMessage({ open, onOpenChange, defaultRecipientIds, defaul
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Neue Nachricht</DialogTitle>
+          <DialogTitle>{t("portal.newMessage")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Recipients */}
           <div>
-            <Label>Empfaenger</Label>
+            <Label>{t("portal.recipients")}</Label>
             <div className="mt-1.5">
               <Popover open={recipientPickerOpen} onOpenChange={setRecipientPickerOpen}>
                 <PopoverTrigger asChild>
                   <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border px-3 py-2 cursor-pointer hover:border-indigo-400 dark:border-slate-700">
                     {selectedEmployees.length === 0 ? (
-                      <span className="text-sm text-slate-400">Empfaenger auswaehlen...</span>
+                      <span className="text-sm text-slate-400">{t("portal.selectRecipients")}</span>
                     ) : (
                       selectedEmployees.map((emp) => (
                         <Badge key={emp.user.id} variant="secondary" className="gap-1">
@@ -140,9 +142,9 @@ export function ComposeMessage({ open, onOpenChange, defaultRecipientIds, defaul
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Mitarbeiter suchen..." />
+                    <CommandInput placeholder={t("portal.searchEmployees")} />
                     <CommandList>
-                      <CommandEmpty>Kein Mitarbeiter gefunden.</CommandEmpty>
+                      <CommandEmpty>{t("portal.noEmployeeFound")}</CommandEmpty>
                       <CommandGroup>
                         {employees.map((emp) => (
                           <CommandItem
@@ -174,30 +176,30 @@ export function ComposeMessage({ open, onOpenChange, defaultRecipientIds, defaul
 
           {/* Subject */}
           <div>
-            <Label>Betreff</Label>
+            <Label>{t("portal.subject")}</Label>
             <Input
               className="mt-1.5"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Betreff eingeben..."
+              placeholder={t("portal.subjectPlaceholder")}
             />
           </div>
 
           {/* Body */}
           <div>
-            <Label>Nachricht</Label>
+            <Label>{t("portal.messageLabel")}</Label>
             <Textarea
               className="mt-1.5 min-h-[160px]"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Nachricht schreiben..."
+              placeholder={t("portal.messagePlaceholder")}
             />
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
-              Abbrechen
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={() => sendMutation.mutate()}
@@ -205,7 +207,7 @@ export function ComposeMessage({ open, onOpenChange, defaultRecipientIds, defaul
               className="gap-2"
             >
               <Send className="size-4" />
-              {sendMutation.isPending ? "Sende..." : "Senden"}
+              {sendMutation.isPending ? t("portal.sending") : t("portal.send")}
             </Button>
           </div>
         </div>

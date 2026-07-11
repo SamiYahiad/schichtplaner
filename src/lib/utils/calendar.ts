@@ -91,56 +91,7 @@ export function formatDateLong(date: Date): string {
   return format(date, "dd.MM.yyyy");
 }
 
-/** German day abbreviations (Mon-Sun in ISO order). */
-export const dayNames = [
-  "Mo",
-  "Di",
-  "Mi",
-  "Do",
-  "Fr",
-  "Sa",
-  "So",
-] as const;
-
-/** English day abbreviations (Mon-Sun in ISO order). */
-export const dayNamesEn = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat",
-  "Sun",
-] as const;
-
-/** German month abbreviations (index 0 = January). */
-export const monthNames = [
-  "Jan",
-  "Feb",
-  "Mär",
-  "Apr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Okt",
-  "Nov",
-  "Dez",
-] as const;
-
-/** English month abbreviations (index 0 = January). */
-export const monthNamesEn = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
+// Locale-aware day/month abbreviations live in messages/*.json under
+// "schedule.dayNamesShort" (Mon-Sun, ISO order) and "schedule.monthsShort"
+// (Jan-Dec). Use `t.raw("schedule.dayNamesShort")` / `t.raw("schedule.monthsShort")`
+// from a component instead of importing static arrays here.

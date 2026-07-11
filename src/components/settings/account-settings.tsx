@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ export function AccountSettings({
   onUpdate,
   isSaving,
 }: AccountSettingsProps) {
+  const t = useTranslations();
   const [name, setName] = useState(orgName);
   const [address, setAddress] = useState(orgAddress);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -41,33 +43,33 @@ export function AccountSettings({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Account</h2>
+        <h2 className="text-xl font-semibold">{t("settings.account")}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Firmendaten und Account-Verwaltung
+          {t("settings.accountDescription")}
         </p>
       </div>
 
       {/* Company info */}
       <Card className="p-6 space-y-4">
-        <Label className="text-base font-semibold">Firmendaten</Label>
+        <Label className="text-base font-semibold">{t("settings.companyData")}</Label>
 
         <div className="space-y-4 max-w-md">
           <div className="space-y-2">
-            <Label>Firmenname</Label>
+            <Label>{t("auth.companyName")}</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Firmenname eingeben"
+              placeholder={t("settings.companyNamePlaceholder")}
               disabled={isSaving}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Adresse</Label>
+            <Label>{t("settings.address")}</Label>
             <Textarea
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Firmenadresse eingeben"
+              placeholder={t("settings.addressPlaceholder")}
               rows={3}
               disabled={isSaving}
             />
@@ -76,7 +78,7 @@ export function AccountSettings({
           {hasChanges && (
             <Button onClick={handleSave} disabled={isSaving || !name.trim()}>
               {isSaving && <Loader2 className="size-4 animate-spin" />}
-              Speichern
+              {t("common.save")}
             </Button>
           )}
         </div>
@@ -87,7 +89,7 @@ export function AccountSettings({
         <div className="flex items-center gap-2">
           <AlertTriangle className="size-5 text-destructive" />
           <Label className="text-base font-semibold text-destructive">
-            Gefahrenzone
+            {t("settings.dangerZone")}
           </Label>
         </div>
 
@@ -95,8 +97,7 @@ export function AccountSettings({
 
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Das Loeschen des Accounts entfernt alle Daten unwiderruflich. Dieser
-            Vorgang kann nicht rueckgaengig gemacht werden.
+            {t("settings.deleteAccountWarning")}
           </p>
 
           {!showDeleteConfirm ? (
@@ -105,17 +106,17 @@ export function AccountSettings({
               size="sm"
               onClick={() => setShowDeleteConfirm(true)}
             >
-              Account loeschen anfragen
+              {t("settings.requestAccountDeletion")}
             </Button>
           ) : (
             <div className="space-y-3 max-w-md p-4 rounded-lg border border-destructive/30 bg-destructive/5">
               <p className="text-sm font-medium">
-                Gib &quot;LOESCHEN&quot; ein um fortzufahren:
+                {t("settings.deleteConfirmPrompt")}
               </p>
               <Input
                 value={deleteInput}
                 onChange={(e) => setDeleteInput(e.target.value)}
-                placeholder='Tippe "LOESCHEN"'
+                placeholder={t("settings.deleteConfirmPlaceholder")}
                 className="border-destructive/30"
               />
               <div className="flex gap-2">
@@ -125,14 +126,12 @@ export function AccountSettings({
                   disabled={deleteInput !== "LOESCHEN"}
                   onClick={() => {
                     // placeholder - not implemented
-                    alert(
-                      "Deine Anfrage wurde gesendet. Ein Admin wird sich bei dir melden."
-                    );
+                    alert(t("settings.deleteRequestSent"));
                     setShowDeleteConfirm(false);
                     setDeleteInput("");
                   }}
                 >
-                  Unwiderruflich loeschen
+                  {t("settings.deleteIrreversibly")}
                 </Button>
                 <Button
                   variant="outline"
@@ -142,7 +141,7 @@ export function AccountSettings({
                     setDeleteInput("");
                   }}
                 >
-                  Abbrechen
+                  {t("common.cancel")}
                 </Button>
               </div>
             </div>

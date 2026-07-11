@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   TrendingUp,
   TrendingDown,
@@ -43,6 +44,7 @@ interface ForecastData {
 // ─── Page ───────────────────────────────────────────────────────────
 
 export default function AiInsightsPage() {
+  const t = useTranslations();
   const {
     data,
     isLoading,
@@ -55,7 +57,7 @@ export default function AiInsightsPage() {
       const res = await fetch("/api/ai/forecast?summary=true");
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Fehler beim Laden der Prognose");
+        throw new Error(data.error || t("ai.forecastLoadError"));
       }
       return res.json();
     },
@@ -72,9 +74,9 @@ export default function AiInsightsPage() {
             <BarChart3 className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">KI-Insights & Prognose</h1>
+            <h1 className="text-xl font-bold">{t("ai.insightsTitle")}</h1>
             <p className="text-sm text-muted-foreground">
-              Stunden-Trends und Prognosen basierend auf historischen Daten
+              {t("ai.insightsSubtitle")}
             </p>
           </div>
         </div>
@@ -83,7 +85,7 @@ export default function AiInsightsPage() {
           <Link href="/ai/chat">
             <Button variant="outline" size="sm" className="gap-1.5">
               <Sparkles className="size-3.5" />
-              KI-Chat
+              {t("ai.aiChatLink")}
             </Button>
           </Link>
           <Button
@@ -96,7 +98,7 @@ export default function AiInsightsPage() {
             <RefreshCw
               className={cn("size-3.5", isFetching && "animate-spin")}
             />
-            Aktualisieren
+            {t("ai.refresh")}
           </Button>
         </div>
       </div>
@@ -107,7 +109,7 @@ export default function AiInsightsPage() {
           <div className="text-center space-y-3">
             <Loader2 className="mx-auto size-8 animate-spin text-indigo-500" />
             <p className="text-sm text-muted-foreground">
-              Prognose wird berechnet...
+              {t("ai.calculatingForecast")}
             </p>
           </div>
         </div>
@@ -117,7 +119,7 @@ export default function AiInsightsPage() {
       {error && !isLoading && (
         <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 p-6 text-center">
           <p className="text-sm text-red-600 dark:text-red-400">
-            {error instanceof Error ? error.message : "Fehler beim Laden"}
+            {error instanceof Error ? error.message : t("ai.loadError")}
           </p>
           <Button
             variant="outline"
@@ -125,7 +127,7 @@ export default function AiInsightsPage() {
             className="mt-3"
             onClick={() => refetch()}
           >
-            Erneut versuchen
+            {t("errors.retry")}
           </Button>
         </div>
       )}
@@ -138,9 +140,9 @@ export default function AiInsightsPage() {
             {/* Average hours */}
             <MetricCard
               icon={Clock}
-              label="Ø Stunden / Woche"
+              label={t("ai.avgHoursPerWeek")}
               value={`${forecast.avgHoursPerWeek}h`}
-              description="Letzte 12 Wochen"
+              description={t("ai.last12Weeks")}
             />
 
             {/* Trend */}
@@ -152,14 +154,14 @@ export default function AiInsightsPage() {
                     ? TrendingDown
                     : Minus
               }
-              label="Trend"
+              label={t("ai.trend")}
               value={`${forecast.trendPercent > 0 ? "+" : ""}${forecast.trendPercent}%`}
               description={
                 forecast.trend === "up"
-                  ? "Steigende Tendenz"
+                  ? t("ai.trendUp")
                   : forecast.trend === "down"
-                    ? "Sinkende Tendenz"
-                    : "Stabil"
+                    ? t("ai.trendDown")
+                    : t("ai.trendStable")
               }
               variant={
                 forecast.trend === "up"
@@ -173,16 +175,16 @@ export default function AiInsightsPage() {
             {/* Employees */}
             <MetricCard
               icon={Users}
-              label="Aktive Mitarbeiter"
+              label={t("ai.activeEmployees")}
               value={String(forecast.totalEmployees)}
-              description="In der Organisation"
+              description={t("ai.inOrganization")}
             />
           </div>
 
           {/* Forecast chart */}
           <div className="rounded-xl border bg-white dark:bg-slate-900 p-6">
             <h2 className="text-lg font-semibold mb-4">
-              Stunden-Verlauf & Prognose
+              {t("ai.hoursChartTitle")}
             </h2>
             <ForecastChart
               dataPoints={forecast.dataPoints}
@@ -193,24 +195,24 @@ export default function AiInsightsPage() {
           {/* Weekly breakdown table */}
           <div className="rounded-xl border bg-white dark:bg-slate-900 overflow-hidden">
             <div className="px-6 py-4 border-b">
-              <h2 className="text-lg font-semibold">Wochen-Details</h2>
+              <h2 className="text-lg font-semibold">{t("ai.weeklyDetails")}</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-slate-50 dark:bg-slate-800/50">
-                    <th className="text-left px-4 py-2 font-medium">Woche</th>
+                    <th className="text-left px-4 py-2 font-medium">{t("ai.week")}</th>
                     <th className="text-right px-4 py-2 font-medium">
-                      Stunden
+                      {t("time.hours")}
                     </th>
                     <th className="text-right px-4 py-2 font-medium">
-                      Schichten
+                      {t("ai.shifts")}
                     </th>
                     <th className="text-right px-4 py-2 font-medium">
-                      Mitarbeiter
+                      {t("employees.title")}
                     </th>
                     <th className="text-right px-4 py-2 font-medium">
-                      Ø h/MA
+                      {t("ai.avgHoursPerEmployee")}
                     </th>
                   </tr>
                 </thead>
@@ -236,7 +238,7 @@ export default function AiInsightsPage() {
                           <span className="font-medium">{dp.label}</span>
                           {dp.isForecast && (
                             <span className="ml-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                              PROGNOSE
+                              {t("ai.forecast").toUpperCase()}
                             </span>
                           )}
                         </td>

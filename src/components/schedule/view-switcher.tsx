@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { LayoutGrid, Table2, User, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,31 +15,31 @@ interface ViewSwitcherProps {
 
 const views: {
   key: string;
-  label: string;
+  labelKey: string;
   icon: typeof LayoutGrid;
   getHref: (kw: string, month: string) => string;
 }[] = [
   {
     key: "flexible",
-    label: "Flexibel",
+    labelKey: "schedule.viewFlexible",
     icon: LayoutGrid,
     getHref: (kw: string, _month: string) => `/schedule/flexible/${kw}`,
   },
   {
     key: "classic",
-    label: "Klassisch",
+    labelKey: "schedule.viewClassic",
     icon: Table2,
     getHref: (kw: string, _month: string) => `/schedule/classic/${kw}`,
   },
   {
     key: "employee",
-    label: "Mitarbeiter",
+    labelKey: "schedule.viewEmployee",
     icon: User,
     getHref: (kw: string, _month: string) => `/schedule/employee/${kw}`,
   },
   {
     key: "month",
-    label: "Monat",
+    labelKey: "schedule.viewMonth",
     icon: CalendarDays,
     getHref: (_kw: string, month: string) => `/schedule/month/${month}`,
   },
@@ -69,6 +70,7 @@ function kwToMonth(kw: string): string {
 
 export function ViewSwitcher({ kw, month }: ViewSwitcherProps) {
   const pathname = usePathname();
+  const t = useTranslations();
 
   // Determine the effective KW and month for link generation
   const effectiveKW = kw ?? "01-2026";
@@ -105,7 +107,7 @@ export function ViewSwitcher({ kw, month }: ViewSwitcherProps) {
             )}
           >
             <Icon className="size-3.5" />
-            <span className="hidden sm:inline">{view.label}</span>
+            <span className="hidden sm:inline">{t(view.labelKey)}</span>
           </Link>
         );
       })}

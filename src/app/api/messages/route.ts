@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentMember } from "@/lib/auth-helpers";
@@ -6,9 +7,10 @@ import { emitToOrg } from "@/lib/emit";
 
 // GET /api/messages?folder=inbox|sent|trash
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const folder = request.nextUrl.searchParams.get("folder") || "inbox";
@@ -93,22 +95,23 @@ const sendSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = sendSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -129,7 +132,7 @@ export async function POST(request: NextRequest) {
 
   if (validIds.length === 0) {
     return NextResponse.json(
-      { error: "No valid recipients found" },
+      { error: t("errors.noValidRecipients") },
       { status: 400 }
     );
   }

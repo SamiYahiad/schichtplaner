@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import { emitToOrg, emitToSchedule } from "@/lib/emit";
 
 const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const updateShiftSchema = z.object({
-  divisionId: z.string().optional().nullable(),
-  dayOfWeek: z.number().int().min(1).max(7).optional(),
-  shiftFrom: z.string().regex(TIME_REGEX, "Ungueltige Startzeit (HH:MM)").optional(),
-  shiftTo: z.string().regex(TIME_REGEX, "Ungueltige Endzeit (HH:MM)").optional(),
-  maxEmployees: z.number().int().min(1).optional(),
-  pauseOption: z.enum(["PER_HOUR", "PER_SHIFT"]).optional(),
-  pauseValue: z.number().int().min(0).optional(),
-  title: z.string().max(100).optional().nullable(),
-  description: z.string().max(500).optional().nullable(),
-});
+function buildUpdateShiftSchema(t: (key: string) => string) {
+  return z.object({
+    divisionId: z.string().optional().nullable(),
+    dayOfWeek: z.number().int().min(1).max(7).optional(),
+    shiftFrom: z.string().regex(TIME_REGEX, t("errors.invalidStartTime")).optional(),
+    shiftTo: z.string().regex(TIME_REGEX, t("errors.invalidEndTime")).optional(),
+    maxEmployees: z.number().int().min(1).optional(),
+    pauseOption: z.enum(["PER_HOUR", "PER_SHIFT"]).optional(),
+    pauseValue: z.number().int().min(0).optional(),
+    title: z.string().max(100).optional().nullable(),
+    description: z.string().max(500).optional().nullable(),
+  });
+}
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -28,13 +31,14 @@ interface RouteContext {
  * Update shift fields.
  */
 export async function PATCH(request: NextRequest, context: RouteContext) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { id } = await context.params;
@@ -43,13 +47,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
+  const updateShiftSchema = buildUpdateShiftSchema(t);
   const parsed = updateShiftSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -64,7 +69,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   if (!existing || existing.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Schicht nicht gefunden" },
+      { error: t("errors.shiftNotFound") },
       { status: 404 }
     );
   }
@@ -76,7 +81,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const effectiveTo = updateData.shiftTo ?? existing.shiftTo;
   if (effectiveFrom >= effectiveTo) {
     return NextResponse.json(
-      { error: "Startzeit muss vor Endzeit liegen" },
+      { error: t("errors.startBeforeEnd") },
       { status: 400 }
     );
   }
@@ -92,7 +97,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     });
     if (!division) {
       return NextResponse.json(
-        { error: "Arbeitsbereich nicht gefunden" },
+        { error: t("errors.divisionNotFound") },
         { status: 404 }
       );
     }
@@ -142,13 +147,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
  * Soft-delete a shift (set deletedAt). Also removes all bookings.
  */
 export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { id } = await context.params;
@@ -163,7 +169,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
   if (!existing || existing.schedule.organizationId !== member.organizationId) {
     return NextResponse.json(
-      { error: "Schicht nicht gefunden" },
+      { error: t("errors.shiftNotFound") },
       { status: 404 }
     );
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember } from "@/lib/auth-helpers";
 
@@ -10,9 +11,10 @@ import { getCurrentMember } from "@/lib/auth-helpers";
  * and division info.
  */
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { searchParams } = request.nextUrl;
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   if (!kwParam || !yearParam) {
     return NextResponse.json(
-      { error: "Missing query parameters: kw and year are required" },
+      { error: t("errors.missingQueryParams") },
       { status: 400 }
     );
   }
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
     year > 2100
   ) {
     return NextResponse.json(
-      { error: "Invalid kw or year values" },
+      { error: t("errors.invalidKwOrYear") },
       { status: 400 }
     );
   }

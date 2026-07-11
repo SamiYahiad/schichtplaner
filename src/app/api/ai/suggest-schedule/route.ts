@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import { generateScheduleSuggestion } from "@/lib/ai/auto-planner";
@@ -17,14 +18,15 @@ const requestSchema = z.object({
  * Requires MANAGER+ role and AI autoPlanner feature to be enabled.
  */
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isManagerOrAbove(member.role)) {
     return NextResponse.json(
-      { error: "Nur Manager koennen KI-Vorschlaege anfordern" },
+      { error: t("errors.managersOnlySuggestions") },
       { status: 403 }
     );
   }
@@ -33,13 +35,13 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
 
   if (!schedule) {
     return NextResponse.json(
-      { error: "Schichtplan nicht gefunden" },
+      { error: t("errors.scheduleNotFound") },
       { status: 404 }
     );
   }
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
   );
   if (!aiEnabled) {
     return NextResponse.json(
-      { error: "KI Auto-Planner ist fuer diese Organisation deaktiviert" },
+      { error: t("errors.autoPlannerDisabled") },
       { status: 403 }
     );
   }
@@ -100,7 +102,7 @@ export async function POST(request: NextRequest) {
         ...s,
         employeeName: user
           ? `${user.firstName} ${user.lastName}`
-          : "Unbekannt",
+          : t("portal.unknownUser"),
         employeeImage: user?.profileImage ?? null,
       };
     });
@@ -134,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     console.error("[AI Suggest Schedule] Error:", error);
     return NextResponse.json(
-      { error: "KI-Vorschlag konnte nicht generiert werden" },
+      { error: t("errors.suggestionGenerationFailed") },
       { status: 500 }
     );
   }

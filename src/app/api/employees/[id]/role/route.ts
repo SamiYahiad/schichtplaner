@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isAdminOrAbove } from "@/lib/auth-helpers";
 
@@ -12,13 +13,14 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   if (!isAdminOrAbove(member.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   const { id } = await params;
@@ -31,13 +33,13 @@ export async function PATCH(
   });
 
   if (!target) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: t("errors.notFound") }, { status: 404 });
   }
 
   // Cannot change the owner's role
   if (target.role === "OWNER") {
     return NextResponse.json(
-      { error: "Cannot change the owner's role" },
+      { error: t("errors.cannotChangeOwnerRole") },
       { status: 400 }
     );
   }
@@ -45,7 +47,7 @@ export async function PATCH(
   // Cannot change your own role
   if (target.userId === member.userId) {
     return NextResponse.json(
-      { error: "Cannot change your own role" },
+      { error: t("errors.cannotChangeOwnRole") },
       { status: 400 }
     );
   }
@@ -54,13 +56,13 @@ export async function PATCH(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = changeRoleSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }

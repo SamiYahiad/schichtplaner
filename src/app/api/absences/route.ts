@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentMember, isAdminOrAbove } from "@/lib/auth-helpers";
 import { startOfMonth, endOfMonth, parse } from "date-fns";
 
 // GET /api/absences - List absences for the org
 export async function GET(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   const { searchParams } = request.nextUrl;
@@ -114,22 +116,23 @@ const createAbsenceSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
   if (!member) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: t("errors.invalidJson") }, { status: 400 });
   }
 
   const parsed = createAbsenceSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Validation failed", details: parsed.error.issues },
+      { error: t("errors.validationFailed"), details: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -139,7 +142,7 @@ export async function POST(request: NextRequest) {
   // Permission check: employees can only create for themselves
   const isAdmin = isAdminOrAbove(member.role);
   if (!isAdmin && data.userId !== member.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
   }
 
   // Employees always create as PENDING, admins can create as APPROVED
@@ -155,7 +158,7 @@ export async function POST(request: NextRequest) {
   });
   if (!targetMember) {
     return NextResponse.json(
-      { error: "User not found in organization" },
+      { error: t("errors.userNotInOrg") },
       { status: 404 }
     );
   }
@@ -169,7 +172,7 @@ export async function POST(request: NextRequest) {
   });
   if (!category) {
     return NextResponse.json(
-      { error: "Category not found" },
+      { error: t("errors.categoryNotFound") },
       { status: 404 }
     );
   }
@@ -179,13 +182,13 @@ export async function POST(request: NextRequest) {
   const dateTo = new Date(data.dateTo + "T00:00:00.000Z");
   if (isNaN(dateFrom.getTime()) || isNaN(dateTo.getTime())) {
     return NextResponse.json(
-      { error: "Invalid date format" },
+      { error: t("errors.invalidDateFormat") },
       { status: 400 }
     );
   }
   if (dateFrom > dateTo) {
     return NextResponse.json(
-      { error: "dateFrom must be before or equal to dateTo" },
+      { error: t("errors.dateFromBeforeDateTo") },
       { status: 400 }
     );
   }
