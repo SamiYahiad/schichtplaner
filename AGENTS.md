@@ -27,6 +27,48 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `prisma/seed.ts`) is intentionally left in German and not routed through message keys — it's user-editable
   data, not app chrome, same category as any other org's real data.
 
+## Form dialog reset patterns (no `useEffect` for state resets)
+
+`react-hooks/set-state-in-effect` (and `ref-during-render`) are enforced lint errors here, so form
+dialogs cannot reset their fields via a `useEffect` keyed on `open`. Two patterns replace it,
+depending on who owns the `open` state:
+
+- **Locally-owned `open` state** (e.g. `division-form.tsx`): seed the fields directly inside the
+  `onOpenChange` handler instead of an effect — there is no render-time comparison needed because
+  the handler only fires on an actual transition.
+- **`open` as a controlled prop from the parent** (e.g. `shift-form.tsx`, `time-record-form.tsx`,
+  `absence-form.tsx`, the briefing sheet in `schedule-options.tsx`): use the React-documented
+  "previous prop" render-time comparison — store the previous values of `open` (and any other
+  reset-relevant prop) in state, compare during render, and call `setState` conditionally inside
+  that `if` block when something changed. This still counts as "resetting during render," which
+  the lint rule allows; it's the synchronous `setState`-inside-`useEffect` pattern that's banned.
+- **Trap: the comparison must include every value the reset depends on, not just `open`.** A form
+  that pre-fills from data still loading when the dialog opens (e.g. `categoriesData` in
+  `absence-form.tsx`, `currentMember`, `defaultDate`) needs that data in the compared-and-stored
+  dependency set too, or the fields silently stay empty if the query resolves after the dialog is
+  already open. This exact regression happened once already: the initial lint fix collapsed the
+  comparison down to `open` only, which broke async-data resync, and had to be restored
+  (`b62d71f`).
+- **Trap: compare the stable source object, not a value derived from it with a fallback.** Comparing
+  `categoriesData?.categories ?? []` instead of `categoriesData` itself caused an infinite
+  re-render loop in `absence-form.tsx` — while `categoriesData` is loading, `?? []` evaluates its
+  fallback branch and allocates a brand-new array literal on every single render, so the dependency
+  always looks "changed" and the reset block (which itself triggers a render) never stops firing.
+  Always diff against the raw query/prop value, and derive filtered/defaulted values from it
+  separately, outside the comparison.
+
+`stopwatch.tsx`'s running elapsed-time display follows the same "no setState-in-effect" rule
+differently: `elapsed` is now computed directly during render as `running ? computeElapsed() : 0`
+instead of being pushed into state from a `setInterval` callback. The effect only owns an
+otherwise-unused tick counter (`setTick((t) => t + 1)` every second while `running`) whose sole job
+is to force a re-render so the render-time `computeElapsed()` call re-evaluates against the clock.
+
+`src/lib/socket.ts`'s `useSocketEvent` used to assign `handlerRef.current = handler` directly in
+the component body, which is a ref mutation during render (also lint-banned). It's now assigned
+inside a `useLayoutEffect` that runs on every render instead — `useLayoutEffect` rather than
+`useEffect` so the ref is updated before any browser paint or event delivery, keeping the same
+"always call the latest handler" behavior the render-time assignment used to guarantee.
+
 ## Docker production stack (docker-compose.yml / Dockerfile / Caddyfile)
 
 A `docker compose up -d --build` from a clean checkout now comes up healthy end to end
