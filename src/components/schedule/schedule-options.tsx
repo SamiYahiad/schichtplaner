@@ -414,14 +414,20 @@ function BriefingButton({
   const briefing = data?.briefing ?? null;
   const hasBriefing = !!briefing;
 
-  // Sync text when sheet opens
-  const handleOpenChange = (next: boolean) => {
-    setOpen(next);
-    if (next) {
+  // Sync text when sheet opens, or when the briefing loads while it's open
+  const [prevSyncDeps, setPrevSyncDeps] = useState({ open, briefing });
+  const syncDepsChanged = open !== prevSyncDeps.open || briefing !== prevSyncDeps.briefing;
+  if (syncDepsChanged) {
+    setPrevSyncDeps({ open, briefing });
+    if (open) {
       const briefingText = briefing?.text ?? "";
       setText(briefingText);
       setInitialText(briefingText);
     }
+  }
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
   };
 
   // Auto-resize textarea

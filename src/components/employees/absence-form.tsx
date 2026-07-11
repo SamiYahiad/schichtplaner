@@ -143,10 +143,31 @@ export function AbsenceForm({
 
   const categories = categoriesData?.categories ?? [];
 
-  // Reset form when dialog opens
-  const [prevOpen, setPrevOpen] = useState(open);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
+  // Reset form when dialog opens, or when data it depends on arrives while open
+  const [prevResetDeps, setPrevResetDeps] = useState({
+    open,
+    absence,
+    currentMember,
+    categories,
+    defaultDateFrom,
+    defaultDateTo,
+  });
+  const resetDepsChanged =
+    open !== prevResetDeps.open ||
+    absence !== prevResetDeps.absence ||
+    currentMember !== prevResetDeps.currentMember ||
+    categories !== prevResetDeps.categories ||
+    defaultDateFrom !== prevResetDeps.defaultDateFrom ||
+    defaultDateTo !== prevResetDeps.defaultDateTo;
+  if (resetDepsChanged) {
+    setPrevResetDeps({
+      open,
+      absence,
+      currentMember,
+      categories,
+      defaultDateFrom,
+      defaultDateTo,
+    });
     if (open) {
       if (absence) {
         setUserId(absence.userId);

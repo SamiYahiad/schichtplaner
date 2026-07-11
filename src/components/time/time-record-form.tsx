@@ -107,10 +107,20 @@ export function TimeRecordForm({
     (c) => c.enabled
   );
 
-  // Reset form when dialog opens
-  const [prevOpen, setPrevOpen] = useState(open);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
+  // Reset form when dialog opens, or when data it depends on arrives while open
+  const [prevResetDeps, setPrevResetDeps] = useState({
+    open,
+    record,
+    currentMember,
+    defaultDate,
+  });
+  const resetDepsChanged =
+    open !== prevResetDeps.open ||
+    record !== prevResetDeps.record ||
+    currentMember !== prevResetDeps.currentMember ||
+    defaultDate !== prevResetDeps.defaultDate;
+  if (resetDepsChanged) {
+    setPrevResetDeps({ open, record, currentMember, defaultDate });
     if (open) {
       if (record) {
         setUserId(record.userId);
