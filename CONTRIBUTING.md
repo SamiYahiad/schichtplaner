@@ -42,7 +42,8 @@ npm run dev
 
 ### Code
 
-- **Language:** UI text is German, code and variables are English
+- **Language:** UI text is localized via next-intl (`messages/{fr,de,en}.json`, French is default); code and variables are English
+- **i18n:** user-facing strings go through translation keys, not hardcoded text — see the i18n section in [AGENTS.md](AGENTS.md)
 - **Validation:** Zod schemas for all API inputs
 - **API pattern:** `getCurrentMember()` → role check → Zod validation → Prisma query
 - **Imports:** `@/*` alias maps to `./src/*`
@@ -83,6 +84,7 @@ Every API route follows this pattern:
 ```typescript
 import { getCurrentMember, isManagerOrAbove } from "@/lib/auth-helpers";
 import { NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 
@@ -91,9 +93,10 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const t = await getTranslations();
   const member = await getCurrentMember();
-  if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!isManagerOrAbove(member.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!member) return NextResponse.json({ error: t("errors.unauthorized") }, { status: 401 });
+  if (!isManagerOrAbove(member.role)) return NextResponse.json({ error: t("errors.forbidden") }, { status: 403 });
 
   const body = await request.json();
   const data = schema.parse(body);
