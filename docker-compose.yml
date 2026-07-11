@@ -40,6 +40,18 @@ services:
       retries: 5
     restart: unless-stopped
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-schichtplaner}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-schichtplaner}
+    restart: "no"
+
   app:
     build:
       context: .
@@ -49,6 +61,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:
