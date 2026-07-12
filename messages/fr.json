@@ -173,6 +173,7 @@
     "addShiftButton": "Créneau",
     "addShiftButtonFull": "Ajouter un créneau",
     "shiftWord": "{count, plural, one {créneau} other {créneaux}}",
+    "shift": "Créneau",
     "bookedLabel": "affecté",
     "jumpToKw": "Aller à :",
     "toastBriefingSaved": "Briefing enregistré",

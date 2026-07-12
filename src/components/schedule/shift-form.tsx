@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -82,7 +82,9 @@ export function ShiftForm({
   const divisions = divisionsData?.divisions ?? [];
 
   // Reset form when dialog opens
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       if (shift) {
         // Edit mode: populate from shift
@@ -108,7 +110,7 @@ export function ShiftForm({
         setRepeatDays([defaultDayOfWeek]);
       }
     }
-  }, [open, shift, defaultDayOfWeek]);
+  }
 
   // Toggle a day in repeatDays
   function toggleDay(day: number) {

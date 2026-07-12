@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -143,8 +143,31 @@ export function AbsenceForm({
 
   const categories = categoriesData?.categories ?? [];
 
-  // Reset form when dialog opens
-  useEffect(() => {
+  // Reset form when dialog opens, or when data it depends on arrives while open
+  const [prevResetDeps, setPrevResetDeps] = useState({
+    open,
+    absence,
+    currentMember,
+    categoriesData,
+    defaultDateFrom,
+    defaultDateTo,
+  });
+  const resetDepsChanged =
+    open !== prevResetDeps.open ||
+    absence !== prevResetDeps.absence ||
+    currentMember !== prevResetDeps.currentMember ||
+    categoriesData !== prevResetDeps.categoriesData ||
+    defaultDateFrom !== prevResetDeps.defaultDateFrom ||
+    defaultDateTo !== prevResetDeps.defaultDateTo;
+  if (resetDepsChanged) {
+    setPrevResetDeps({
+      open,
+      absence,
+      currentMember,
+      categoriesData,
+      defaultDateFrom,
+      defaultDateTo,
+    });
     if (open) {
       if (absence) {
         setUserId(absence.userId);
@@ -160,7 +183,7 @@ export function AbsenceForm({
         setNote("");
       }
     }
-  }, [open, absence, currentMember, categories, defaultDateFrom, defaultDateTo]);
+  }
 
   // Create mutation
   const createMutation = useMutation({

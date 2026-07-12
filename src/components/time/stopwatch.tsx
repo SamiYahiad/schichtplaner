@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -48,11 +48,10 @@ function formatElapsed(totalSeconds: number): string {
 export function Stopwatch() {
   const t = useTranslations();
   const queryClient = useQueryClient();
-  const [elapsed, setElapsed] = useState(0);
+  const [, setTick] = useState(0);
   const [showStopForm, setShowStopForm] = useState(false);
   const [categoryId, setCategoryId] = useState<string>("none");
   const [comment, setComment] = useState("");
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch running watch
   const { data: watchData, isLoading } = useQuery<{ running: RunningWatch | null }>({
@@ -93,28 +92,14 @@ export function Stopwatch() {
     return elapsedMinutes * 60 + nowSeconds;
   }, [running]);
 
-  // Timer effect
+  // Tick every second while running, to force a re-render that recomputes elapsed time.
   useEffect(() => {
-    if (running) {
-      setElapsed(computeElapsed());
-      intervalRef.current = setInterval(() => {
-        setElapsed(computeElapsed());
-      }, 1000);
-    } else {
-      setElapsed(0);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
+    if (!running) return;
+    const interval = setInterval(() => setTick((tick) => tick + 1), 1000);
+    return () => clearInterval(interval);
+  }, [running]);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [running, computeElapsed]);
+  const elapsed = running ? computeElapsed() : 0;
 
   // Start mutation
   const startMutation = useMutation({

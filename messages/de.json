@@ -173,6 +173,7 @@
     "addShiftButton": "Schicht",
     "addShiftButtonFull": "Schicht hinzufügen",
     "shiftWord": "{count, plural, one {Schicht} other {Schichten}}",
+    "shift": "Schicht",
     "bookedLabel": "gebucht",
     "jumpToKw": "Springe zu:",
     "toastBriefingSaved": "Briefing gespeichert",

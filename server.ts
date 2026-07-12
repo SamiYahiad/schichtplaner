@@ -62,7 +62,7 @@ app.prepare().then(() => {
     });
   });
 
-  (globalThis as any).__socketIO = io;
+  (globalThis as Record<string, unknown>).__socketIO = io;
 
   httpServer.listen(port, hostname, () => {
     console.log(`> Ready on http://${hostname}:${port}`);
